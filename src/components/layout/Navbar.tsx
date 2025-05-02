@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
@@ -257,10 +258,10 @@ const Navbar = () => {
                   </Link>
                   <DropdownMenuSeparator />
                   <AuthLogout>
-                    {(logoutProps) => (
+                    {({ logout }) => (
                       <DropdownMenuItem 
                         className="text-red-500 cursor-pointer"
-                        onClick={() => logoutProps.logout()}
+                        onClick={() => logout()}
                       >
                         <LogOut className="mr-2 h-4 w-4" />
                         <span>Log Out</span>
@@ -444,13 +445,13 @@ const Navbar = () => {
 
                   {isAuthenticated && (
                     <AuthLogout>
-                      {(logoutProps) => (
+                      {({ logout }) => (
                         <SheetClose asChild>
                           <Button 
                             variant="outline" 
                             className="w-full justify-start font-normal mt-4 text-red-500 hover:text-red-600 hover:bg-red-50/50 dark:hover:bg-red-900/20"
                             onClick={() => {
-                              logoutProps.logout();
+                              logout();
                               setIsMobileMenuOpen(false);
                             }}
                           >
