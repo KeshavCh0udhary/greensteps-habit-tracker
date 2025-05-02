@@ -18,8 +18,16 @@ import VerifyEmailPage from "./pages/VerifyEmailPage";
 import Dashboard from "./pages/Dashboard/Dashboard";
 import DashboardLayout from "./pages/Dashboard/DashboardLayout";
 import NotFound from "./pages/NotFound";
+
+// New Pages
 import About from "./pages/About";
+import Blogs from "./pages/Blogs";
+import FAQs from "./pages/FAQs";
 import Community from "./pages/Community";
+import Terms from "./pages/Terms";
+import Privacy from "./pages/Privacy";
+import Contact from "./pages/Contact";
+import Careers from "./pages/Careers";
 
 const queryClient = new QueryClient();
 
@@ -51,8 +59,16 @@ const App = () => {
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/verify-email" element={<VerifyEmailPage />} />
               <Route path="/auth/callback" element={<AuthCallback />} />
+              
+              {/* Public Pages */}
               <Route path="/about" element={<About />} />
+              <Route path="/blogs" element={<Blogs />} />
+              <Route path="/faqs" element={<FAQs />} />
               <Route path="/community" element={<Community />} />
+              <Route path="/terms" element={<Terms />} />
+              <Route path="/privacy" element={<Privacy />} />
+              <Route path="/contact" element={<Contact />} />
+              <Route path="/careers" element={<Careers />} />
 
               {/* Dashboard Routes */}
               <Route 

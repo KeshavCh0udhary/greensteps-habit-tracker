@@ -7,6 +7,7 @@ import { ChevronDown } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth";
 import AuthModal from "@/components/auth/AuthModal";
+import { motion } from "framer-motion";
 
 const Navbar = () => {
   const location = useLocation();
@@ -31,11 +32,22 @@ const Navbar = () => {
     setIsMenuOpen(!isMenuOpen);
   };
 
-  const navItems = [
+  const publicNavItems = [
     { name: "Home", path: "/" },
     { name: "About", path: "/about" },
+    { name: "Blogs", path: "/blogs" },
+    { name: "FAQs", path: "/faqs" },
     { name: "Community", path: "/community" },
   ];
+
+  const authenticatedNavItems = [
+    { name: "Dashboard", path: "/dashboard" },
+    { name: "My Habits", path: "/habits" },
+    { name: "Community", path: "/community" },
+    { name: "Progress", path: "/progress" },
+  ];
+
+  const navItems = user ? authenticatedNavItems : publicNavItems;
 
   return (
     <header
@@ -55,13 +67,22 @@ const Navbar = () => {
             <Link
               key={item.name}
               to={item.path}
-              className={`px-4 py-2 rounded-lg text-foreground hover:text-primary hover:bg-accent/50 transition-all ${
+              className={`relative px-4 py-2 rounded-lg text-foreground transition-colors group ${
                 location.pathname === item.path
-                  ? "font-medium text-primary bg-accent/50"
-                  : ""
+                  ? "font-medium text-primary"
+                  : "hover:text-primary"
               }`}
             >
               {item.name}
+              <motion.span 
+                className={`absolute bottom-0 left-0 w-full h-0.5 bg-primary rounded transform origin-left ${
+                  location.pathname === item.path ? "scale-x-100" : "scale-x-0"
+                }`}
+                initial={false}
+                animate={{ scaleX: location.pathname === item.path ? 1 : 0 }}
+                transition={{ duration: 0.3 }}
+              />
+              <span className="absolute bottom-0 left-0 w-full h-0.5 bg-primary rounded transform origin-left scale-x-0 transition-transform group-hover:scale-x-100" />
             </Link>
           ))}
         </div>
@@ -78,10 +99,10 @@ const Navbar = () => {
           ) : (
             <div className="hidden md:flex items-center space-x-2">
               <AuthModal defaultTab="login">
-                <Button variant="outline">Log in</Button>
+                <Button variant="outline" className="rounded-full px-6">Log in</Button>
               </AuthModal>
               <AuthModal defaultTab="signup">
-                <Button>Sign up</Button>
+                <Button className="rounded-full px-6">Sign up</Button>
               </AuthModal>
             </div>
           )}

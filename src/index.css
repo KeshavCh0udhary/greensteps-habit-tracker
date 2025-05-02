@@ -113,7 +113,7 @@
   }
 
   .leaf-decoration {
-    @apply absolute w-24 h-24 text-green-200/20 pointer-events-none;
+    @apply absolute w-24 h-24 pointer-events-none;
     z-index: -1;
   }
   
@@ -127,38 +127,9 @@
       @apply w-16 h-16;
     }
   }
-  
-  /* Enhanced animations */
-  .animate-float {
-    animation: float 6s ease-in-out infinite;
-  }
-  
-  @keyframes float {
-    0% {
-      transform: translateY(0px);
-    }
-    50% {
-      transform: translateY(-20px);
-    }
-    100% {
-      transform: translateY(0px);
-    }
-  }
-  
-  /* More responsive text sizing */
-  h1 {
-    font-size: clamp(2rem, 5vw, 3.5rem);
-  }
-  
-  h2 {
-    font-size: clamp(1.5rem, 4vw, 2.5rem);
-  }
-  
-  h3 {
-    font-size: clamp(1.25rem, 3vw, 2rem);
-  }
 }
 
+/* Animations */
 @keyframes leaf-sway {
   0%, 100% { transform: rotate(-3deg) translateY(0); }
   50% { transform: rotate(3deg) translateY(-5px); }
@@ -198,6 +169,22 @@
   animation: pulse-gentle 3s ease-in-out infinite;
 }
 
+/* Ripple effect for buttons */
+.ripple-effect {
+  position: absolute;
+  border-radius: 50%;
+  transform: scale(0);
+  animation: ripple 600ms linear;
+  background-color: rgba(255, 255, 255, 0.7);
+}
+
+@keyframes ripple {
+  to {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
 /* Mobile-first dashboard layout */
 .dashboard-layout {
   @apply grid gap-4;
@@ -224,4 +211,67 @@
 .hover-lift:hover {
   transform: translateY(-5px);
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* Infinite carousel animation */
+@keyframes carousel {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-carousel {
+  animation: carousel 25s linear infinite;
+  min-width: 200%;
+}
+
+/* Social links hover effects */
+.social-link {
+  @apply transition-transform duration-300;
+}
+
+.social-link:hover {
+  @apply transform -translate-y-1;
+}
+
+/* Underline animation for links */
+.underline-animation {
+  @apply relative;
+}
+
+.underline-animation::after {
+  content: '';
+  @apply absolute w-full scale-x-0 h-0.5 bg-primary bottom-0 left-0 origin-bottom-right transition-transform duration-300;
+}
+
+.underline-animation:hover::after {
+  @apply scale-x-100 origin-bottom-left;
+}
+
+/* Testimonial glow effect */
+.testimonial-card:hover {
+  box-shadow: 0 0 20px rgba(76, 175, 80, 0.2);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: hsl(var(--muted));
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--ring));
 }
