@@ -1,7 +1,6 @@
-
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -10,6 +9,7 @@ import { getSupabaseClient } from "@/lib/supabase";
 import { HabitWithLogStatus } from "@/types/interfaces";
 import EcoHabitCard from "@/components/eco/EcoHabitCard";
 import CreateHabitForm from "@/components/eco/CreateHabitForm";
+import { useAuth } from "@/lib/auth";
 
 interface HabitManagementProps {
   date: Date;
@@ -19,7 +19,9 @@ interface HabitManagementProps {
 
 const HabitManagement = ({ date, formattedDate, onLogHabit }: HabitManagementProps) => {
   const [showAddHabitDialog, setShowAddHabitDialog] = useState(false);
-  const supabase = getSupabaseClient(); 
+  const [recentlyLoggedHabits, setRecentlyLoggedHabits] = useState<Set<string>>(new Set());
+  const supabase = getSupabaseClient();
+  const { user } = useAuth();
   
   // Animation variants
   const containerVariants = {
@@ -38,6 +40,13 @@ const HabitManagement = ({ date, formattedDate, onLogHabit }: HabitManagementPro
       opacity: 1,
       y: 0,
       transition: { type: "spring", stiffness: 100 }
+    },
+    highlight: {
+      scale: [1, 1.05, 1],
+      transition: {
+        duration: 0.5,
+        ease: "easeInOut"
+      }
     }
   };
 
@@ -62,12 +71,15 @@ const HabitManagement = ({ date, formattedDate, onLogHabit }: HabitManagementPro
 
   // Fetch user's logs specifically for today
   const { data: logs, isLoading: logsLoading, refetch: refetchLogs } = useQuery({
-    queryKey: ['daily-logs', formattedDate],
+    queryKey: ['daily-logs', formattedDate, user?.id],
     queryFn: async () => {
+      if (!user) return [];
+      
       const { data, error } = await supabase
         .from('daily_logs')
         .select('*')
-        .eq('date', formattedDate);
+        .eq('date', formattedDate)
+        .eq('user_id', user.id);
         
       if (error) {
         console.error("Error fetching logs:", error);
@@ -76,7 +88,8 @@ const HabitManagement = ({ date, formattedDate, onLogHabit }: HabitManagementPro
       
       console.log("Fetched logs for date:", formattedDate, data);
       return data;
-    }
+    },
+    enabled: !!user
   });
 
   // Combine habits with log status - ensuring habits are only marked as logged if they were logged for THIS specific date
@@ -89,6 +102,37 @@ const HabitManagement = ({ date, formattedDate, onLogHabit }: HabitManagementPro
       logNotes: log?.notes
     };
   }) || [];
+
+  // Handle habit logging with animation
+  const handleHabitLog = async (habitId: string, notes: string) => {
+    try {
+      // Add to recently logged set for animation
+      setRecentlyLoggedHabits(prev => new Set(prev).add(habitId));
+      
+      // Log the habit
+      await onLogHabit(habitId, notes);
+      
+      // Remove from recently logged set after animation
+      setTimeout(() => {
+        setRecentlyLoggedHabits(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(habitId);
+          return newSet;
+        });
+      }, 1000);
+      
+      // Refresh logs
+      await refetchLogs();
+    } catch (error) {
+      console.error("Error logging habit:", error);
+      // Remove from recently logged set if there was an error
+      setRecentlyLoggedHabits(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(habitId);
+        return newSet;
+      });
+    }
+  };
 
   // Handle habit creation success - close dialog and refresh habits
   const handleHabitCreationSuccess = async () => {
@@ -113,76 +157,55 @@ const HabitManagement = ({ date, formattedDate, onLogHabit }: HabitManagementPro
           </span>
           Today's Eco-Habits ({new Date(date).toLocaleDateString(undefined, {month: 'short', day: 'numeric', year: 'numeric'})})
         </h2>
-        <div className="flex items-center gap-3">
-          <div className="text-sm text-muted-foreground bg-background/70 backdrop-blur-sm px-3 py-1 rounded-full border shadow-sm">
-            Logged: {logs?.length || 0}/{habits?.length || 0}
-          </div>
-          <Dialog open={showAddHabitDialog} onOpenChange={setShowAddHabitDialog}>
-            <DialogTrigger asChild>
-              <Button size="sm" variant="outline" className="flex items-center gap-1 bg-background/70 backdrop-blur-sm">
-                <Plus className="h-4 w-4" />
-                <span>New</span>
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-md">
-              <DialogHeader>
-                <DialogTitle>Create Custom Eco-Habit</DialogTitle>
-                <DialogDescription>
-                  Add a new eco-friendly habit to track. Custom habits are visible to all users.
-                </DialogDescription>
-              </DialogHeader>
-              <CreateHabitForm 
-                onSuccess={handleHabitCreationSuccess} 
-                onCancel={() => setShowAddHabitDialog(false)} 
-              />
-            </DialogContent>
-          </Dialog>
-        </div>
+        <Dialog open={showAddHabitDialog} onOpenChange={setShowAddHabitDialog}>
+          <DialogTrigger asChild>
+            <Button variant="outline" size="sm" className="gap-2">
+              <Plus className="h-4 w-4" />
+              Add Habit
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Create New Eco-Habit</DialogTitle>
+              <DialogDescription>
+                Add a new sustainable habit to track and earn eco-points.
+              </DialogDescription>
+            </DialogHeader>
+            <CreateHabitForm 
+              onSuccess={handleHabitCreationSuccess} 
+              onCancel={() => setShowAddHabitDialog(false)}
+            />
+          </DialogContent>
+        </Dialog>
       </motion.div>
-      
+
       {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[1, 2, 3, 4].map((i) => (
-            <Card key={i} className="animate-pulse">
-              <div className="p-4 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-muted rounded-full"></div>
-                  <div className="space-y-2">
-                    <div className="h-4 w-24 bg-muted rounded"></div>
-                    <div className="h-3 w-16 bg-muted rounded"></div>
-                  </div>
-                </div>
-              </div>
-            </Card>
-          ))}
+        <div className="flex items-center justify-center h-32">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         </div>
       ) : (
-        <motion.div 
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-        >
-          {habitsWithLogStatus.map((habit, index) => (
-            <motion.div 
-              key={habit.id}
-              variants={itemVariants}
-              custom={index}
-              whileHover={{ y: -4, transition: { duration: 0.2 } }}
-              className="hover-lift"
-            >
-              <EcoHabitCard
-                id={habit.id}
-                emoji={habit.emoji}
-                title={habit.title}
-                points={habit.eco_points}
-                isCompleted={habit.isLogged}
-                logId={habit.logId}
-                logNotes={habit.logNotes}
-                onComplete={onLogHabit}
-              />
-            </motion.div>
-          ))}
+        <motion.div variants={itemVariants} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <AnimatePresence>
+            {habitsWithLogStatus.map((habit) => (
+              <motion.div
+                key={habit.id}
+                variants={itemVariants}
+                animate={recentlyLoggedHabits.has(habit.id) ? "highlight" : "visible"}
+                transition={{ duration: 0.3 }}
+              >
+                <EcoHabitCard
+                  id={habit.id}
+                  emoji={habit.emoji}
+                  title={habit.title}
+                  points={habit.eco_points}
+                  isCompleted={habit.isLogged}
+                  logId={habit.logId}
+                  logNotes={habit.logNotes}
+                  onComplete={handleHabitLog}
+                />
+              </motion.div>
+            ))}
+          </AnimatePresence>
         </motion.div>
       )}
     </motion.div>

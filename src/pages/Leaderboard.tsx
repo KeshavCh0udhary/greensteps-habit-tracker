@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import PageLayout from "@/components/layout/PageLayout";
@@ -70,7 +69,8 @@ const Leaderboard = () => {
           return sampleLeaderboardData;
         }
 
-        let query = supabase
+        // Get all user profiles with their total points
+        const { data: profiles, error: profilesError } = await supabase
           .from("profiles")
           .select(`
             id,
@@ -79,69 +79,57 @@ const Leaderboard = () => {
             total_points,
             current_streak,
             badges:badges(badge_type)
-          `)
-          .order("total_points", { ascending: false });
+          `);
 
-        // Apply time period filters for weekly or monthly data
-        if (selectedPeriod === "week" || selectedPeriod === "month") {
-          const daysToSubtract = selectedPeriod === "week" ? 7 : 30;
-          const startDate = new Date();
-          startDate.setDate(startDate.getDate() - daysToSubtract);
-          
-          try {
-            const { data, error } = await supabase
-              .from("daily_logs")
-              .select("user_id, eco_points")
-              .gte("date", startDate.toISOString().split("T")[0]);
-            
-            if (error) {
-              console.error("Error fetching daily logs:", error);
-              throw error;
-            }
-            
-            // Process data to get points per user within time period
-            const pointsByUser = data.reduce((acc: Record<string, number>, log) => {
-              const userId = log.user_id;
-              acc[userId] = (acc[userId] || 0) + log.eco_points;
-              return acc;
-            }, {});
-            
-            // Get user profiles and combine with points data
-            const { data: profiles, error: profilesError } = await supabase
-              .from("profiles")
-              .select(`
-                id,
-                display_name,
-                avatar_url,
-                current_streak,
-                badges:badges(badge_type)
-              `);
-            
-            if (profilesError) {
-              console.error("Error fetching profiles:", profilesError);
-              throw profilesError;
-            }
-            
-            // Combine profiles with their points for the period
-            const result = profiles.map(profile => ({
+        if (profilesError) {
+          console.error("Error fetching profiles:", profilesError);
+          throw profilesError;
+        }
+
+        // If no profiles found, return sample data
+        if (!profiles || profiles.length === 0) {
+          return sampleLeaderboardData;
+        }
+
+        // For all-time leaderboard, use total_points from profiles
+        if (selectedPeriod === "all") {
+          return profiles
+            .map(profile => ({
               ...profile,
-              total_points: pointsByUser[profile.id] || 0
-            })).sort((a, b) => b.total_points - a.total_points);
-            
-            return result.length > 0 ? result : sampleLeaderboardData;
-          } catch (err) {
-            console.error("Error in time period filtering:", err);
-            return sampleLeaderboardData;
-          }
+              total_points: profile.total_points || 0
+            }))
+            .sort((a, b) => b.total_points - a.total_points);
+        }
+
+        // For weekly or monthly leaderboard, calculate points from daily logs
+        const daysToSubtract = selectedPeriod === "week" ? 7 : 30;
+        const startDate = new Date();
+        startDate.setDate(startDate.getDate() - daysToSubtract);
+        
+        const { data: logs, error: logsError } = await supabase
+          .from("daily_logs")
+          .select("user_id, eco_points")
+          .gte("date", startDate.toISOString().split("T")[0]);
+        
+        if (logsError) {
+          console.error("Error fetching daily logs:", logsError);
+          throw logsError;
         }
         
-        const { data, error } = await query;
-        if (error) {
-          console.error("Error fetching leaderboard data:", error);
-          throw error;
-        }
+        // Calculate points for each user in the selected period
+        const pointsByUser = logs.reduce((acc: Record<string, number>, log) => {
+          const userId = log.user_id;
+          acc[userId] = (acc[userId] || 0) + log.eco_points;
+          return acc;
+        }, {});
         
-        return data && data.length > 0 ? data : sampleLeaderboardData;
+        // Combine profiles with their points for the period
+        const result = profiles.map(profile => ({
+          ...profile,
+          total_points: pointsByUser[profile.id] || 0
+        })).sort((a, b) => b.total_points - a.total_points);
+        
+        return result.length > 0 ? result : sampleLeaderboardData;
       } catch (error) {
         console.error("Error fetching leaderboard data:", error);
         toast.error("Failed to load leaderboard");
