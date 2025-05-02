@@ -19,8 +19,8 @@ export function useIsMobile() {
   return !!isMobile
 }
 
-// Add the useMediaQuery hook that AuthModal is trying to import
-export function useMediaQuery(query: string) {
+// Fix the useMediaQuery hook implementation
+export function useMediaQuery(query: string): boolean {
   const [matches, setMatches] = React.useState<boolean>(false)
 
   React.useEffect(() => {
