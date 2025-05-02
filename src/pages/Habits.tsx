@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { useAuth } from "@/lib/auth";
-import { supabase } from "@/integrations/supabase/client";
+import { getSupabaseClient } from "@/lib/supabase"; // Update to use getSupabaseClient
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import PageLayout from "@/components/layout/PageLayout";
@@ -36,6 +36,7 @@ const Habits = () => {
   const [showAddHabitDialog, setShowAddHabitDialog] = useState(false);
   const [habitToDelete, setHabitToDelete] = useState<Habit | null>(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const supabase = getSupabaseClient(); // Get the client using the function
   
   const { register, handleSubmit, reset, setValue, watch } = useForm({
     defaultValues: {
@@ -76,7 +77,12 @@ const Habits = () => {
         .select('*')
         .order('title', { ascending: true });
         
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching habits:", error);
+        throw error;
+      }
+      
+      console.log("Fetched habits:", data);
       return data as Habit[];
     }
   });
@@ -84,16 +90,24 @@ const Habits = () => {
   // Handle creating a new custom habit
   const handleCreateHabit = async (data: { title: string, emoji: string, eco_points: number }) => {
     try {
+      console.log("Creating habit:", data);
+      
       // Insert the new habit into the database
-      const { error } = await supabase
+      const { error, data: newHabit } = await supabase
         .from('eco_habits')
         .insert([{
           title: data.title,
           emoji: data.emoji,
           eco_points: Number(data.eco_points)
-        }]);
+        }])
+        .select();
       
-      if (error) throw error;
+      if (error) {
+        console.error("Error creating habit:", error);
+        throw error;
+      }
+      
+      console.log("Habit created successfully:", newHabit);
       
       // Display success animation
       toast.success("New habit created!", {
@@ -124,7 +138,10 @@ const Habits = () => {
         .delete()
         .eq('id', habitToDelete.id);
       
-      if (error) throw error;
+      if (error) {
+        console.error("Error deleting habit:", error);
+        throw error;
+      }
       
       toast.success("Habit deleted", {
         description: `"${habitToDelete.title}" has been removed`

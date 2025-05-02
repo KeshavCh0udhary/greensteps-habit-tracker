@@ -8,7 +8,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { DialogFooter } from "@/components/ui/dialog";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { getSupabaseClient } from "@/lib/supabase"; // Update import to use getSupabaseClient
 import { motion } from "framer-motion";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { z } from "zod";
@@ -38,6 +38,7 @@ interface CreateHabitFormProps {
 const CreateHabitForm = ({ onSuccess, onCancel }: CreateHabitFormProps) => {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const supabase = getSupabaseClient(); // Get the client using the function
   
   const form = useForm<HabitFormData>({
     resolver: zodResolver(habitSchema),

@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Leaf, Plus } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { getSupabaseClient } from "@/lib/supabase"; // Update to use getSupabaseClient
 import { HabitWithLogStatus } from "@/types/interfaces";
 import EcoHabitCard from "@/components/eco/EcoHabitCard";
 import CreateHabitForm from "@/components/eco/CreateHabitForm";
@@ -19,6 +19,7 @@ interface HabitManagementProps {
 
 const HabitManagement = ({ date, formattedDate, onLogHabit }: HabitManagementProps) => {
   const [showAddHabitDialog, setShowAddHabitDialog] = useState(false);
+  const supabase = getSupabaseClient(); // Get the client using the function
   
   // Animation variants
   const containerVariants = {
