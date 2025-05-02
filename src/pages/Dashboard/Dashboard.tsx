@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,8 +7,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import EcoHabitCard from "@/components/eco/EcoHabitCard";
 import EcoHabitBadge from "@/components/eco/EcoHabitBadge";
-import { format, subDays } from "date-fns";
-import { Check, ChevronRight, Plus, Award, BarChart, Calendar, Leaf } from "lucide-react";
+import { format, subDays, differenceInDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear } from "date-fns";
+import { Check, ChevronRight, Plus, Award, BarChart, Calendar, Leaf, Users, CalendarDays } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -18,6 +19,10 @@ import { showConfetti, showStreakConfetti } from "@/lib/confetti";
 import CalendarView from "@/components/eco/CalendarView";
 import { motion, AnimatePresence } from "framer-motion";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import CommunityCard from "@/components/community/CommunityCard";
+import StatsCard from "@/components/stats/StatsCard";
+import CalendarHeatmap from "@/components/calendar/CalendarHeatmap";
 
 // Types for our data
 interface Habit {
@@ -55,13 +60,56 @@ interface HabitWithLogStatus extends Habit {
   logNotes?: string | null;
 }
 
+interface Community {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  member_count: number;
+}
+
 // Define log data type for calendar
 type LogDataRecord = Record<string, { habits: string[], total_points: number }>;
+
+// Calendar view types
+type CalendarViewType = "week" | "month" | "year";
 
 // Available emoji choices for custom habits
 const emojiChoices = [
   "🚲", "🌱", "🌿", "🌳", "🌞", "🚶‍♂️", "🔋", "♻️", "🥗", 
   "🚿", "🌊", "📱", "💡", "🥤", "👜", "🚰", "🍽️", "🥬"
+];
+
+// Sample communities for demonstration
+const sampleCommunities: Community[] = [
+  {
+    id: "1",
+    name: "Zero Waste Group",
+    description: "Dedicated to reducing waste and living sustainably",
+    icon: "♻️",
+    member_count: 128
+  },
+  {
+    id: "2",
+    name: "Plant Lovers",
+    description: "For people who love growing plants and gardening",
+    icon: "🌱",
+    member_count: 94
+  },
+  {
+    id: "3",
+    name: "Eco Commuters",
+    description: "Using eco-friendly transportation methods",
+    icon: "🚲",
+    member_count: 56
+  },
+  {
+    id: "4",
+    name: "Clean Energy Advocates",
+    description: "Promoting renewable energy solutions",
+    icon: "☀️",
+    member_count: 72
+  }
 ];
 
 const Dashboard = () => {
@@ -71,6 +119,7 @@ const Dashboard = () => {
   const [showAddHabitDialog, setShowAddHabitDialog] = useState(false);
   const [selectedEmoji, setSelectedEmoji] = useState("🌱");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [calendarView, setCalendarView] = useState<CalendarViewType>("month");
   
   const { register, handleSubmit, reset, setValue, watch } = useForm({
     defaultValues: {
@@ -184,6 +233,29 @@ const Dashboard = () => {
       return data[0] || { total_logs: 0, total_points: 0 };
     }
   });
+
+  // Fetch all user's logs for stats calculations
+  const { data: allUserLogs, isLoading: allUserLogsLoading } = useQuery({
+    queryKey: ['all-user-logs', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      
+      const { data, error } = await supabase
+        .from('daily_logs')
+        .select('*')
+        .eq('user_id', user.id);
+        
+      if (error) throw error;
+      return data as Log[];
+    },
+    enabled: !!user
+  });
+  
+  // Calculate total active days (distinct days with at least one logged habit)
+  const totalActiveDays = allUserLogs ? new Set(allUserLogs.map(log => log.date)).size : 0;
+
+  // Calculate total points earned from all logs
+  const totalPointsEarned = allUserLogs ? allUserLogs.reduce((sum, log) => sum + (log.eco_points || 0), 0) : 0;
   
   // Combine habits with log status
   const habitsWithLogStatus: HabitWithLogStatus[] = habits?.map(habit => {
@@ -196,21 +268,44 @@ const Dashboard = () => {
     };
   }) || [];
   
+  // Get date range based on current view
+  const getDateRange = () => {
+    switch (calendarView) {
+      case "week":
+        return {
+          start: startOfWeek(date, { weekStartsOn: 0 }),
+          end: endOfWeek(date, { weekStartsOn: 0 })
+        };
+      case "year":
+        return {
+          start: startOfYear(date),
+          end: endOfYear(date)
+        };
+      case "month":
+      default:
+        return {
+          start: startOfMonth(date),
+          end: endOfMonth(date)
+        };
+    }
+  };
+  
   // Monthly calendar data for the heatmap
-  const { data: monthlyLogs, isLoading: monthlyLogsLoading } = useQuery({
-    queryKey: ['monthly-logs', user?.id, format(date, 'yyyy-MM')],
+  const { data: periodLogs, isLoading: periodLogsLoading } = useQuery({
+    queryKey: ['period-logs', user?.id, calendarView, format(date, 'yyyy-MM-dd')],
     queryFn: async () => {
       if (!user) return {} as LogDataRecord;
       
-      const startDate = format(new Date(date.getFullYear(), date.getMonth(), 1), 'yyyy-MM-dd');
-      const endDate = format(new Date(date.getFullYear(), date.getMonth() + 1, 0), 'yyyy-MM-dd');
+      const { start, end } = getDateRange();
+      const startDateStr = format(start, 'yyyy-MM-dd');
+      const endDateStr = format(end, 'yyyy-MM-dd');
       
       const { data, error } = await supabase
         .from('daily_logs')
         .select('date, habit_id, eco_points')
         .eq('user_id', user.id)
-        .gte('date', startDate)
-        .lte('date', endDate);
+        .gte('date', startDateStr)
+        .lte('date', endDateStr);
         
       if (error) throw error;
       
@@ -227,10 +322,10 @@ const Dashboard = () => {
         acc[log.date].total_points += log.eco_points;
         
         return acc;
-      }, {} as LogDataRecord);\
+      }, {} as LogDataRecord);
       
       return groupedByDate;
-    },\
+    },
     enabled: !!user
   });
 
@@ -428,7 +523,7 @@ const Dashboard = () => {
           // Add some confetti for a nice welcome effect
           setTimeout(() => {
             showConfetti();
-          }, 500);\
+          }, 500);
         }, 800);
       }
     }
@@ -499,7 +594,7 @@ const Dashboard = () => {
             My Stats
           </TabsTrigger>
           <TabsTrigger value="community" className="flex items-center gap-2">
-            <Award className="h-4 w-4" />
+            <Users className="h-4 w-4" />
             Community
           </TabsTrigger>
         </TabsList>
@@ -666,7 +761,7 @@ const Dashboard = () => {
           </motion.div>
         </TabsContent>
 
-        {/* Calendar Tab - Fix duplication issue */}
+        {/* Calendar Tab with view options */}
         <TabsContent value="calendar">
           <motion.div 
             initial={{ opacity: 0, y: 10 }}
@@ -675,118 +770,45 @@ const Dashboard = () => {
           >
             <Card className="border shadow-md bg-card/80 backdrop-blur-sm">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Calendar className="h-5 w-5 text-primary" />
-                  Monthly Activity
-                </CardTitle>
-                <CardDescription>
-                  Your eco-habit logging activity for {format(date, 'MMMM yyyy')}</CardDescription>
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                  <div>
+                    <CardTitle className="flex items-center gap-2">
+                      <Calendar className="h-5 w-5 text-primary" />
+                      Calendar Activity
+                    </CardTitle>
+                    <CardDescription>
+                      Your eco-habit logging activity for {format(date, calendarView === "year" ? 'yyyy' : calendarView === "week" ? "'Week of' MMM d, yyyy" : 'MMMM yyyy')}
+                    </CardDescription>
+                  </div>
+                  <div className="flex items-center">
+                    <ToggleGroup type="single" value={calendarView} onValueChange={(value) => value && setCalendarView(value as CalendarViewType)}>
+                      <ToggleGroupItem value="week" aria-label="View Week" className="flex items-center gap-1">
+                        <CalendarDays className="h-3.5 w-3.5" />
+                        <span className="hidden sm:inline">Week</span>
+                      </ToggleGroupItem>
+                      <ToggleGroupItem value="month" aria-label="View Month" className="flex items-center gap-1">
+                        <Calendar className="h-3.5 w-3.5" />
+                        <span className="hidden sm:inline">Month</span>
+                      </ToggleGroupItem>
+                      <ToggleGroupItem value="year" aria-label="View Year" className="flex items-center gap-1">
+                        <CalendarDays className="h-3.5 w-3.5" />
+                        <span className="hidden sm:inline">Year</span>
+                      </ToggleGroupItem>
+                    </ToggleGroup>
+                  </div>
+                </div>
               </CardHeader>
               <CardContent>
-                {monthlyLogsLoading ? (
+                {periodLogsLoading ? (
                   <div className="animate-pulse">
                     <div className="h-64 bg-muted rounded"></div>
                   </div>
                 ) : (
-                  <div className="p-2">
-                    {/* GitHub-style streak heatmap */}
-                    <div className="grid grid-cols-7 gap-1 mb-2">
-                      {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-                        <div key={day} className="text-xs text-center text-muted-foreground">
-                          {day[0]}
-                        </div>
-                      ))}
-                    </div>
-                    
-                    <div className="grid grid-cols-7 gap-1">
-                      {Array.from({ length: 35 }, (_, i) => {
-                        // Calculate the date for this cell
-                        const cellDate = new Date(
-                          date.getFullYear(),
-                          date.getMonth(),
-                          1 - (new Date(date.getFullYear(), date.getMonth(), 1).getDay()) + i
-                        );
-                        
-                        const formattedCellDate = format(cellDate, 'yyyy-MM-dd');
-                        const isCurrentMonth = cellDate.getMonth() === date.getMonth();
-                        const dayData = monthlyLogs?.[formattedCellDate];
-                        const habitCount = dayData?.habits.length || 0;
-                        const points = dayData?.total_points || 0;
-                        
-                        // Determine the intensity of the color based on points
-                        let colorClass = 'bg-gray-100 dark:bg-gray-800';
-                        
-                        if (points > 0) {
-                          if (points < 2) colorClass = 'bg-green-100 dark:bg-green-900/30';
-                          else if (points < 5) colorClass = 'bg-green-200 dark:bg-green-800/40';
-                          else if (points < 10) colorClass = 'bg-green-300 dark:bg-green-700/50';
-                          else colorClass = 'bg-green-400 dark:bg-green-600/60';
-                        }
-                        
-                        return (
-                          <Popover key={i}>
-                            <PopoverTrigger asChild>
-                              <button
-                                className={`w-8 h-8 rounded transition-colors relative ${
-                                  isCurrentMonth 
-                                    ? colorClass 
-                                    : 'bg-gray-50 dark:bg-gray-900/20 opacity-40'
-                                } ${
-                                  format(cellDate, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd')
-                                    ? 'ring-2 ring-primary/50'
-                                    : ''
-                                }`}
-                                disabled={!isCurrentMonth}
-                              >
-                                <span className="text-[10px] absolute top-0.5 left-0.5 text-muted-foreground">
-                                  {cellDate.getDate()}
-                                </span>
-                                {habitCount > 0 && (
-                                  <span className="absolute bottom-0.5 right-0.5 text-[10px] font-medium bg-background/60 rounded-full w-4 h-4 flex items-center justify-center">
-                                    {habitCount}
-                                  </span>
-                                )}
-                              </button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-52 p-2">
-                              <div className="space-y-2">
-                                <div className="font-medium">
-                                  {format(cellDate, 'MMMM d, yyyy')}
-                                </div>
-                                <div className="text-sm">
-                                  {habitCount > 0 ? (
-                                    <>
-                                      <div className="flex items-center text-green-600 dark:text-green-400 gap-1 font-medium">
-                                        <span>{habitCount}</span> 
-                                        <span>habit{habitCount > 1 ? 's' : ''} logged</span>
-                                      </div>
-                                      <div className="text-xs text-muted-foreground mt-1">
-                                        {points} eco-points earned
-                                      </div>
-                                    </>
-                                  ) : (
-                                    <div className="text-muted-foreground">
-                                      No habits logged
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            </PopoverContent>
-                          </Popover>
-                        );
-                      })}
-                    </div>
-                    
-                    <div className="mt-4 flex justify-end items-center gap-2">
-                      <div className="text-xs text-muted-foreground">Less</div>
-                      <div className="w-3 h-3 bg-gray-100 dark:bg-gray-800 rounded"></div>
-                      <div className="w-3 h-3 bg-green-100 dark:bg-green-900/30 rounded"></div>
-                      <div className="w-3 h-3 bg-green-200 dark:bg-green-800/40 rounded"></div>
-                      <div className="w-3 h-3 bg-green-300 dark:bg-green-700/50 rounded"></div>
-                      <div className="w-3 h-3 bg-green-400 dark:bg-green-600/60 rounded"></div>
-                      <div className="text-xs text-muted-foreground">More</div>
-                    </div>
-                  </div>
+                  <CalendarHeatmap 
+                    logs={periodLogs}
+                    viewType={calendarView}
+                    currentDate={date}
+                  />
                 )}
               </CardContent>
             </Card>
@@ -802,16 +824,162 @@ const Dashboard = () => {
             transition={{ duration: 0.5 }}
           >
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1, duration: 0.5 }}
-                whileHover={{ y: -5, transition: { duration: 0.2 } }}
-              >
-                <Card className="border shadow-md bg-card/80 backdrop-blur-sm">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-xl flex items-center gap-2">
-                      <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center">
-                        <Leaf className="h-3 w-3 text-primary" />
+              {/* Stats cards */}
+              <StatsCard 
+                title="Total Points" 
+                value={totalPointsEarned}
+                icon={<Leaf className="h-4 w-4" />}
+                description="Points earned from all eco-habits"
+                isLoading={allUserLogsLoading}
+              />
+              
+              <StatsCard 
+                title="Longest Streak" 
+                value={profile?.longest_streak || 0}
+                icon={<Award className="h-4 w-4" />}
+                suffix="days"
+                description="Your best eco-logging streak"
+                isLoading={profileLoading}
+              />
+              
+              <StatsCard 
+                title="Active Days" 
+                value={totalActiveDays}
+                icon={<CalendarDays className="h-4 w-4" />}
+                description="Days with logged eco-habits"
+                isLoading={allUserLogsLoading}
+              />
+              
+              <StatsCard 
+                title="Badges Earned" 
+                value={badges?.length || 0}
+                icon={<Award className="h-4 w-4" />}
+                description="Recognition for your efforts"
+                isLoading={badgesLoading}
+              />
+            </div>
+
+            {/* Badges section */}
+            <Card className="border shadow-md bg-card/80 backdrop-blur-sm">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Award className="h-5 w-5 text-primary" />
+                  Your Achievement Badges
+                </CardTitle>
+                <CardDescription>
+                  Badges you've earned through consistent eco-friendly actions
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {badgesLoading ? (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                    {[1, 2, 3, 4].map(i => (
+                      <div key={i} className="animate-pulse flex flex-col items-center">
+                        <div className="w-16 h-16 bg-muted rounded-full mb-2"></div>
+                        <div className="h-4 w-24 bg-muted rounded"></div>
                       </div>
-                      Total Points
+                    ))}
+                  </div>
+                ) : badges && badges.length > 0 ? (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                    {badges.map(badge => (
+                      <EcoHabitBadge
+                        key={badge.id}
+                        type={badge.badge_type}
+                        earnedAt={new Date(badge.earned_at)}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Award className="h-12 w-12 mx-auto mb-3 opacity-30" />
+                    <p>You haven't earned any badges yet.</p>
+                    <p className="text-sm mt-1">Keep logging eco-habits to earn your first badge!</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </motion.div>
+        </TabsContent>
+        
+        {/* Community Tab */}
+        <TabsContent value="community">
+          <motion.div 
+            className="space-y-6"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5 }}
+          >
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="text-xl font-semibold flex items-center">
+                <span className="bg-primary/10 w-8 h-8 rounded-full flex items-center justify-center mr-2">
+                  <Users className="h-4 w-4 text-primary" />
+                </span>
+                Your Communities
+              </h2>
+              <Button size="sm" variant="outline" className="flex items-center gap-1">
+                <Plus className="h-4 w-4" />
+                <span>Join New</span>
+              </Button>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {sampleCommunities.map(community => (
+                <motion.div
+                  key={community.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5 }}
+                  whileHover={{ y: -4, transition: { duration: 0.2 } }}
+                >
+                  <CommunityCard
+                    id={community.id}
+                    name={community.name}
+                    description={community.description}
+                    icon={community.icon}
+                    memberCount={community.member_count}
+                  />
+                </motion.div>
+              ))}
+            </div>
+            
+            <Card className="border shadow-md bg-card/80 backdrop-blur-sm">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Award className="h-5 w-5 text-primary" />
+                  Community Leaderboard
+                </CardTitle>
+                <CardDescription>
+                  See how your communities are performing
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {sampleCommunities.map((community, index) => (
+                    <div key={community.id} className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-accent/5 transition-colors">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-lg">
+                          {community.icon}
+                        </div>
+                        <div>
+                          <p className="font-medium">{community.name}</p>
+                          <p className="text-xs text-muted-foreground">{community.member_count} members</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-semibold">{(5000 - (index * 1000)).toLocaleString()}</span>
+                        <span className="text-xs text-muted-foreground">points</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+};
+
+export default Dashboard;
