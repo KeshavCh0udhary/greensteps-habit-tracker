@@ -14,7 +14,10 @@ export type AuthContextType = {
     error: Error | null;
     success: boolean;
   }>;
-  signOut: () => Promise<void>;
+  signOut: () => Promise<{
+    error: Error | null;
+    success: boolean;
+  }>;
   resetPassword: (email: string) => Promise<{
     error: Error | null;
     success: boolean;
