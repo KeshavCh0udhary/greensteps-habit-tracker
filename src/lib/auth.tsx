@@ -64,10 +64,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     
     try {
       const { data } = supabase.auth.onAuthStateChange(
-        (_event, session) => {
+        async (event, session) => {
+          console.log("Auth state changed:", event, session?.user?.email);
           setSession(session);
           setUser(session?.user ?? null);
           setLoading(false);
+          
+          // Handle auth state changes for redirects
+          if (event === 'SIGNED_IN') {
+            // Use setTimeout to avoid React state update conflicts
+            setTimeout(() => {
+              // Use window.location to ensure a full redirect that works with OAuth
+              window.location.href = '/dashboard';
+            }, 0);
+          }
         }
       );
       subscription = data.subscription;
