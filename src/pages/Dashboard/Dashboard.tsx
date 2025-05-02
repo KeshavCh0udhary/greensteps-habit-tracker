@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -39,6 +40,8 @@ interface Profile {
   total_points: number;
   current_streak: number;
   longest_streak: number;
+  display_name?: string | null; // Added display_name property as optional
+  avatar_url?: string | null;   // Added avatar_url property as optional
 }
 
 interface Badge {
