@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -37,6 +36,7 @@ interface Log {
   habit_id: string;
   date: string;
   notes: string | null;
+  eco_points: number; // Add this field to the Log interface
 }
 
 interface Profile {
