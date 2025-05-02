@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./lib/auth";
 import { useEffect } from "react";
 import AuthLogout from "./components/auth/AuthLogout";
+import AuthCallback from "./components/auth/AuthCallback";
 
 // Pages
 import Landing from "./pages/Landing";
@@ -49,6 +50,7 @@ const App = () => {
               <Route path="/signup" element={<Signup />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/verify-email" element={<VerifyEmailPage />} />
+              <Route path="/auth/callback" element={<AuthCallback />} />
               <Route path="/about" element={<About />} />
               <Route path="/community" element={<Community />} />
 

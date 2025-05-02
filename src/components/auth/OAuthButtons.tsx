@@ -21,7 +21,8 @@ const OAuthButtons = ({ redirectTo = "/dashboard" }: OAuthButtonsProps) => {
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: `${window.location.origin}${redirectTo}`,
+          redirectTo: `${window.location.origin}/auth/callback`,
+          scopes: provider === 'github' ? 'user:email' : undefined,
         },
       });
 
@@ -33,7 +34,6 @@ const OAuthButtons = ({ redirectTo = "/dashboard" }: OAuthButtonsProps) => {
       toast.error(`${provider} login failed`, {
         description: "Please try again later.",
       });
-    } finally {
       setIsLoading(null);
     }
   };

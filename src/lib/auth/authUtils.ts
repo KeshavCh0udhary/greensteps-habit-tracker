@@ -38,7 +38,7 @@ export const signInUser = async (email: string, password: string) => {
   
   try {
     console.log("Attempting to sign in with email:", email);
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
@@ -47,7 +47,11 @@ export const signInUser = async (email: string, password: string) => {
       throw error;
     }
 
-    console.log("Sign in successful");
+    if (!data.session) {
+      throw new Error("No session returned from sign in");
+    }
+
+    console.log("Sign in successful", data.session);
     return { error: null, success: true };
   } catch (error) {
     console.error("Error signing in:", error);
@@ -60,13 +64,20 @@ export const signOutUser = async () => {
   
   console.log("Attempting to sign out");
   try {
-    await supabase.auth.signOut();
+    const { error } = await supabase.auth.signOut();
+    
+    if (error) {
+      throw error;
+    }
+    
     console.log("Sign out successful");
+    return { error: null, success: true };
   } catch (error) {
     console.error("Error signing out:", error);
     toast.error("Failed to sign out", {
       description: "Please try again later."
     });
+    return { error: error as Error, success: false };
   }
 };
 
@@ -94,11 +105,12 @@ export const checkSupabaseConnection = async () => {
     const supabaseClient = getSupabaseClient();
     const { data, error } = await supabaseClient.auth.getSession();
     
-    if (error && error.message.includes('Failed to fetch')) {
+    if (error && error.message && error.message.includes('Failed to fetch')) {
       console.warn('Supabase connection not available.');
       return false;
     }
     
+    // Successfully connected to Supabase, whether or not a session exists
     return true;
   } catch (error) {
     console.error("Error checking Supabase connection:", error);
