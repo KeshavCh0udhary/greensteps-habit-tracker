@@ -2,6 +2,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { getSupabaseClient } from "./supabase";
 import { Session, User } from "@supabase/supabase-js";
+import { useNavigate } from "react-router-dom";
 
 type AuthContextType = {
   session: Session | null;
@@ -31,7 +32,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [isSupabaseConnected, setIsSupabaseConnected] = useState(false);
   const supabase = getSupabaseClient();
-
+  
   useEffect(() => {
     const setupAuth = async () => {
       try {
@@ -135,6 +136,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signOut = async () => {
     if (isSupabaseConnected) {
       await supabase.auth.signOut();
+      // The navigation to landing page will be handled by the AuthLogout component
     }
   };
 
@@ -182,4 +184,19 @@ export function useAuth() {
     throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
+}
+
+// Create a component for handling logout redirects
+export function AuthLogout() {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  
+  useEffect(() => {
+    if (!user) {
+      // Redirect to landing page when logged out
+      navigate("/");
+    }
+  }, [user, navigate]);
+  
+  return null;
 }

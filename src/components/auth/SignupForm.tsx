@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
+import OAuthButtons from "./OAuthButtons";
 
 const signupFormSchema = z
   .object({
@@ -80,9 +81,12 @@ const SignupForm = () => {
       <div className="space-y-2 text-center">
         <h2 className="text-2xl font-bold">Create an account</h2>
         <p className="text-muted-foreground">
-          Enter your email to create a new account
+          Sign up to track your eco-friendly habits
         </p>
       </div>
+      
+      <OAuthButtons redirectTo="/dashboard" />
+      
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
           <FormField

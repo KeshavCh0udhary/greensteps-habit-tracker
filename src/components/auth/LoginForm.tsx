@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
+import OAuthButtons from "./OAuthButtons";
 
 const loginFormSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -73,6 +74,9 @@ const LoginForm = () => {
           Enter your email to sign in to your account
         </p>
       </div>
+      
+      <OAuthButtons redirectTo="/dashboard" />
+      
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
           <FormField
@@ -122,7 +126,7 @@ const LoginForm = () => {
             )}
           />
           <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? "Signing in..." : "Sign in"}
+            {isLoading ? "Signing in..." : "Sign in with Email"}
           </Button>
         </form>
       </Form>
