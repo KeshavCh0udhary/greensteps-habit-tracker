@@ -1,4 +1,5 @@
 
+
 // LogData types for calendar visualization
 export type LogDataRecord = Record<string, { habits: string[], total_points: number }>;
 
@@ -22,3 +23,11 @@ export interface Community {
   member_count: number;
   isJoined?: boolean;
 }
+
+// Custom habit form data
+export interface HabitFormData {
+  title: string;
+  emoji: string;
+  eco_points: number;
+}
+

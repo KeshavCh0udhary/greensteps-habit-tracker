@@ -10,12 +10,26 @@ import { Plus } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
+import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
 
 // Available emoji choices for custom habits
 const emojiChoices = [
   "🚲", "🌱", "🌿", "🌳", "🌞", "🚶‍♂️", "🔋", "♻️", "🥗", 
   "🚿", "🌊", "📱", "💡", "🥤", "👜", "🚰", "🍽️", "🥬", "🚫", "🧹"
 ];
+
+// Form validation schema
+const habitSchema = z.object({
+  title: z.string().min(1, "Habit title is required"),
+  emoji: z.string().min(1, "Please select an emoji"),
+  eco_points: z.number()
+    .min(0.5, "Minimum value is 0.5")
+    .max(5, "Maximum value is 5")
+});
+
+type HabitFormData = z.infer<typeof habitSchema>;
 
 interface CreateHabitFormProps {
   onSuccess: () => void;
@@ -26,7 +40,8 @@ const CreateHabitForm = ({ onSuccess, onCancel }: CreateHabitFormProps) => {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm({
+  const form = useForm<HabitFormData>({
+    resolver: zodResolver(habitSchema),
     defaultValues: {
       title: "",
       emoji: "🌱",
@@ -34,15 +49,13 @@ const CreateHabitForm = ({ onSuccess, onCancel }: CreateHabitFormProps) => {
     }
   });
 
-  const formEmoji = watch("emoji");
-
   const handleEmojiSelect = (emoji: string) => {
-    setValue("emoji", emoji);
+    form.setValue("emoji", emoji);
     setShowEmojiPicker(false);
   };
 
   // Handle creating a new custom habit
-  const handleCreateHabit = async (data: { title: string, emoji: string, eco_points: number }) => {
+  const handleCreateHabit = async (data: HabitFormData) => {
     try {
       setIsSubmitting(true);
       
@@ -96,96 +109,125 @@ const CreateHabitForm = ({ onSuccess, onCancel }: CreateHabitFormProps) => {
   };
 
   return (
-    <form onSubmit={handleSubmit(handleCreateHabit)} className="space-y-4 py-2">
-      <div className="grid grid-cols-4 gap-4">
-        <div className="col-span-1">
-          <Label htmlFor="emoji">Emoji</Label>
-          <Popover open={showEmojiPicker} onOpenChange={setShowEmojiPicker}>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                className="text-center text-xl w-full h-10"
-                type="button"
-              >
-                {formEmoji}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-64 p-2">
-              <div className="grid grid-cols-5 gap-2">
-                {emojiChoices.map((emoji) => (
-                  <Button
-                    key={emoji}
-                    variant="ghost"
-                    className="h-10 w-10 p-0 text-xl transition-transform hover:scale-125"
-                    onClick={() => handleEmojiSelect(emoji)}
-                    type="button"
-                  >
-                    {emoji}
-                  </Button>
-                ))}
-              </div>
-            </PopoverContent>
-          </Popover>
-          <input type="hidden" {...register("emoji", { required: "Please select an emoji" })} />
-          {errors.emoji && <p className="text-xs text-destructive mt-1">{errors.emoji.message}</p>}
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(handleCreateHabit)} className="space-y-4 py-2">
+        <div className="grid grid-cols-4 gap-4">
+          <div className="col-span-1">
+            <Label htmlFor="emoji">Emoji</Label>
+            <Popover open={showEmojiPicker} onOpenChange={setShowEmojiPicker}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="text-center text-xl w-full h-10"
+                  type="button"
+                >
+                  {form.watch("emoji")}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-64 p-2">
+                <div className="grid grid-cols-5 gap-2">
+                  {emojiChoices.map((emoji) => (
+                    <Button
+                      key={emoji}
+                      variant="ghost"
+                      className="h-10 w-10 p-0 text-xl transition-transform hover:scale-125"
+                      onClick={() => handleEmojiSelect(emoji)}
+                      type="button"
+                    >
+                      {emoji}
+                    </Button>
+                  ))}
+                </div>
+              </PopoverContent>
+            </Popover>
+            <FormField
+              control={form.control}
+              name="emoji"
+              render={({ field }) => (
+                <FormItem className="hidden">
+                  <FormControl>
+                    <Input {...field} type="hidden" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+          
+          <div className="col-span-3">
+            <FormField
+              control={form.control}
+              name="title"
+              render={({ field }) => (
+                <FormItem>
+                  <Label htmlFor="title">Habit Title</Label>
+                  <FormControl>
+                    <Input
+                      id="title"
+                      placeholder="E.g., Used Reusable Bag"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
         </div>
-        <div className="col-span-3">
-          <Label htmlFor="title">Habit Title</Label>
-          <Input
-            id="title"
-            placeholder="E.g., Used Reusable Bag"
-            {...register("title", { required: "Habit title is required" })}
-          />
-          {errors.title && <p className="text-xs text-destructive mt-1">{errors.title.message as string}</p>}
-        </div>
-      </div>
-      <div>
-        <Label htmlFor="eco_points">Eco Points (0.5-5)</Label>
-        <Input
-          id="eco_points"
-          type="number"
-          min="0.5"
-          max="5"
-          step="0.5"
-          {...register("eco_points", { 
-            required: "Points value is required",
-            min: { value: 0.5, message: "Minimum value is 0.5" },
-            max: { value: 5, message: "Maximum value is 5" },
-            valueAsNumber: true
-          })}
+
+        <FormField
+          control={form.control}
+          name="eco_points"
+          render={({ field }) => (
+            <FormItem>
+              <Label htmlFor="eco_points">Eco Points (0.5-5)</Label>
+              <FormControl>
+                <Input
+                  id="eco_points"
+                  type="number"
+                  min="0.5"
+                  max="5"
+                  step="0.5"
+                  {...field}
+                  onChange={event => field.onChange(parseFloat(event.target.value))}
+                />
+              </FormControl>
+              <p className="text-xs text-muted-foreground mt-1">
+                Assign points based on environmental impact (0.5-5)
+              </p>
+              <FormMessage />
+            </FormItem>
+          )}
         />
-        <p className="text-xs text-muted-foreground mt-1">
-          Assign points based on environmental impact (0.5-5)
-        </p>
-        {errors.eco_points && <p className="text-xs text-destructive mt-1">{errors.eco_points.message as string}</p>}
-      </div>
-      <DialogFooter className="mt-4">
-        <Button 
-          type="button"
-          variant="outline" 
-          onClick={onCancel}
-          disabled={isSubmitting}
-        >
-          Cancel
-        </Button>
-        <Button 
-          type="submit" 
-          className="relative overflow-hidden bg-green-600 hover:bg-green-700"
-          disabled={isSubmitting}
-        >
-          <span className="flex items-center gap-1">
-            <Plus className="h-4 w-4" />
-            {isSubmitting ? 'Creating...' : 'Create Habit'}
-          </span>
-          <motion.div 
-            className="absolute inset-0 bg-white" 
-            initial={{ scale: 0, opacity: 0 }}
-            whileHover={{ scale: 1.5, opacity: 0.1 }}
-            transition={{ duration: 0.5 }}
-          />
-        </Button>
-      </DialogFooter>
-    </form>
+
+        <DialogFooter className="mt-4">
+          <Button 
+            type="button"
+            variant="outline" 
+            onClick={onCancel}
+            disabled={isSubmitting}
+          >
+            Cancel
+          </Button>
+          <Button 
+            type="submit" 
+            className="relative overflow-hidden bg-green-600 hover:bg-green-700"
+            disabled={isSubmitting}
+          >
+            <span className="flex items-center gap-1">
+              <Plus className="h-4 w-4" />
+              {isSubmitting ? 'Creating...' : 'Create Habit'}
+            </span>
+            <motion.div 
+              className="absolute inset-0 bg-white" 
+              initial={{ scale: 0, opacity: 0 }}
+              whileHover={{ scale: 1.5, opacity: 0.1 }}
+              transition={{ duration: 0.5 }}
+            />
+          </Button>
+        </DialogFooter>
+      </form>
+    </Form>
   );
 };
 

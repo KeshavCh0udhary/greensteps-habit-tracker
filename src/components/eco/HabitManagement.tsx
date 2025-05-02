@@ -79,10 +79,10 @@ const HabitManagement = ({ date, formattedDate, onLogHabit }: HabitManagementPro
     };
   }) || [];
 
-  // Handle habit creation success
-  const handleHabitCreationSuccess = () => {
+  // Handle habit creation success - close dialog and refresh habits
+  const handleHabitCreationSuccess = async () => {
     setShowAddHabitDialog(false);
-    refetchHabits();
+    await refetchHabits();
   };
 
   const isLoading = habitsLoading || logsLoading;
