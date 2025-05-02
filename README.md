@@ -1,73 +1,111 @@
-# Welcome to your Lovable project
+# GreenSteps Habit Tracker 🌱
 
-## Project info
+A modern, eco-friendly habit tracking application that helps users build sustainable habits while contributing to a greener planet.
 
-**URL**: https://lovable.dev/projects/5fafad76-cb35-4102-a7a2-3d406a9cef5b
+![GreenSteps Logo](public/logo.svg)
 
-## How can I edit this code?
+## 🌟 Features
 
-There are several ways of editing your application.
+- **Habit Tracking**: Log and track your daily eco-friendly habits
+- **Points System**: Earn points for sustainable actions
+- **Leaderboard**: Compete with other users and see who's making the biggest impact
+- **Badges**: Unlock achievements for consistent eco-friendly behavior
+- **Real-time Updates**: See your progress and impact immediately
+- **Responsive Design**: Works seamlessly on desktop and mobile devices
 
-**Use Lovable**
+## 🚀 Getting Started
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/5fafad76-cb35-4102-a7a2-3d406a9cef5b) and start prompting.
+### Prerequisites
 
-Changes made via Lovable will be committed automatically to this repo.
+- Node.js (v18 or higher)
+- npm (v9 or higher)
+- Git
 
-**Use your preferred IDE**
+### Installation
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/KeshavCh0udhary/greensteps-habit-tracker.git
+   cd greensteps-habit-tracker
+   ```
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
 
-Follow these steps:
+3. Create a `.env` file in the root directory with your Supabase credentials:
+   ```
+   VITE_SUPABASE_URL=your_supabase_url
+   VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+   ```
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+4. Start the development server:
+   ```bash
+   npm run dev
+   ```
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+5. Open [http://localhost:5173](http://localhost:5173) in your browser
 
-# Step 3: Install the necessary dependencies.
-npm i
+## 🛠️ Built With
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+- [Vite](https://vitejs.dev/) - Next Generation Frontend Tooling
+- [React](https://reactjs.org/) - A JavaScript library for building user interfaces
+- [TypeScript](https://www.typescriptlang.org/) - JavaScript with syntax for types
+- [Tailwind CSS](https://tailwindcss.com/) - A utility-first CSS framework
+- [shadcn/ui](https://ui.shadcn.com/) - Beautifully designed components
+- [Supabase](https://supabase.com/) - Open source Firebase alternative
+- [Framer Motion](https://www.framer.com/motion/) - Animation library for React
+
+## 📦 Project Structure
+
+```
+greensteps-habit-tracker/
+├── src/
+│   ├── components/     # Reusable UI components
+│   ├── pages/         # Page components
+│   ├── lib/           # Utility functions and hooks
+│   ├── types/         # TypeScript type definitions
+│   └── App.tsx        # Main application component
+├── public/            # Static assets
+└── package.json       # Project dependencies
 ```
 
-**Edit a file directly in GitHub**
+## 🚀 Deployment
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+The project is deployed on Vercel. To deploy your own version:
 
-**Use GitHub Codespaces**
+1. Fork this repository
+2. Create a new project on [Vercel](https://vercel.com)
+3. Import your forked repository
+4. Add your environment variables
+5. Deploy!
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## 🤝 Contributing
 
-## What technologies are used for this project?
+Contributions are welcome! Please feel free to submit a Pull Request.
 
-This project is built with:
+1. Fork the project
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## 📝 License
 
-## How can I deploy this project?
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-Simply open [Lovable](https://lovable.dev/projects/5fafad76-cb35-4102-a7a2-3d406a9cef5b) and click on Share -> Publish.
+## 🙏 Acknowledgments
 
-## Can I connect a custom domain to my Lovable project?
+- Thanks to all contributors who have helped shape this project
+- Special thanks to the open-source community for their amazing tools and libraries
 
-Yes, you can!
+## 📞 Contact
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+Keshav Chaudhary - [@KeshavCh0udhary](https://github.com/KeshavCh0udhary)
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+Project Link: [https://github.com/KeshavCh0udhary/greensteps-habit-tracker](https://github.com/KeshavCh0udhary/greensteps-habit-tracker)
+
+## 🌱 Live Demo
+
+Check out the live application at: [https://greensteps-habit-tracker.vercel.app](https://greensteps-habit-tracker.vercel.app)
