@@ -52,13 +52,25 @@ const App = () => {
     if (lastVisit && lastVisit !== now) {
       // User is returning from a previous session
       setTimeout(() => {
-        toast.success(
-          "Welcome back to GreenSteps! 🌿", 
-          {
-            description: "Ready to continue your eco-journey today?",
-            duration: 5000,
-            className: "welcome-toast",
-          }
+        toast.custom(
+          (id) => (
+            <div className="animate-enter overflow-hidden bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/90 dark:to-emerald-900/80 border border-green-200 dark:border-green-700 p-5 rounded-lg shadow-lg flex gap-4 items-center">
+              <div className="bg-green-500 h-10 w-10 flex-shrink-0 rounded-full flex items-center justify-center text-white">
+                🌿
+              </div>
+              <div>
+                <h3 className="font-bold text-green-800 dark:text-green-100">Welcome back to GreenSteps!</h3>
+                <p className="text-sm text-green-700 dark:text-green-200">Ready to continue your eco-journey today?</p>
+              </div>
+              <button 
+                onClick={() => toast.dismiss(id)}
+                className="ml-4 bg-green-100 dark:bg-green-800/50 h-6 w-6 flex items-center justify-center rounded-full"
+              >
+                ×
+              </button>
+            </div>
+          ),
+          { duration: 5000 }
         );
       }, 1500);
     }
@@ -72,7 +84,20 @@ const App = () => {
       <AuthProvider>
         <TooltipProvider>
           <Toaster />
-          <Sonner />
+          <Sonner 
+            theme="light"
+            position="top-center" 
+            closeButton
+            expand
+            toastOptions={{
+              classNames: {
+                toast: "group toast bg-white dark:bg-zinc-800 border-green-200 dark:border-green-800",
+                title: "text-green-700 dark:text-green-200 font-medium",
+                description: "text-green-600 dark:text-green-300 text-sm"
+              },
+              duration: 4000
+            }}
+          />
           <BrowserRouter>
             <AuthLogout />
             <Routes>

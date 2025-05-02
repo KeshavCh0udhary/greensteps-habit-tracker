@@ -1,10 +1,11 @@
 
 import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Check, Plus } from "lucide-react";
 import EcoHabitTooltip from './EcoHabitTooltip';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface EcoHabitCardProps {
   id: string;
@@ -28,6 +29,7 @@ const EcoHabitCard: React.FC<EcoHabitCardProps> = ({
   onComplete 
 }) => {
   const [isLoading, setIsLoading] = useState(false);
+  const [isNoteDialogOpen, setIsNoteDialogOpen] = useState(false);
 
   const handleComplete = async () => {
     if (!isCompleted) {
@@ -42,89 +44,138 @@ const EcoHabitCard: React.FC<EcoHabitCardProps> = ({
     }
   };
 
+  const handleCardClick = () => {
+    if (isCompleted && logNotes) {
+      setIsNoteDialogOpen(true);
+    }
+  };
+
   return (
-    <Card className={`relative overflow-hidden transition-all ${
-      isCompleted 
-        ? 'bg-primary-foreground/50 border-green-200 dark:border-green-900 shadow-sm' 
-        : 'bg-card hover:shadow-md border border-border'
-    }`}>
-      {/* Completed Indicator */}
-      {isCompleted && (
-        <div className="absolute top-0 right-0">
-          <div className="w-16 h-16 -mt-8 -mr-8 bg-green-500 rotate-45"></div>
-          <Check className="absolute top-1 right-1 text-white h-3 w-3" />
-        </div>
-      )}
-      
-      <CardContent className="p-4">
-        <div className="flex items-start justify-between">
-          <div className="flex items-center gap-3">
-            <motion.div 
-              className={`w-12 h-12 flex items-center justify-center rounded-full text-xl shadow-sm relative ${
-                isCompleted 
-                  ? 'bg-green-100 dark:bg-green-800/30' 
-                  : 'bg-primary/10'
-              }`}
-              whileHover={{ scale: 1.05 }}
-              transition={{ type: "spring", stiffness: 400, damping: 10 }}
-            >
-              {emoji}
-              <motion.div 
-                className={`absolute inset-0 rounded-full ${
-                  isCompleted ? 'bg-green-500/10' : 'bg-primary/5'
-                }`}
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ 
-                  scale: [0.8, 1.2, 1], 
-                  opacity: [0, 0.5, 0] 
-                }}
-                transition={{ duration: 2, repeat: Infinity, repeatDelay: 1 }}
-              />
-            </motion.div>
-            
-            <div className="space-y-1">
-              <h3 className="font-medium leading-none">{title}</h3>
-              <p className="text-xs text-muted-foreground">
-                +{points} points
-                {logNotes && (
-                  <span className="ml-2 text-xs text-primary">📝 Note added</span>
-                )}
-              </p>
-            </div>
+    <>
+      <Card 
+        className={`relative overflow-hidden transition-all cursor-pointer ${
+          isCompleted 
+            ? 'bg-primary-foreground/50 border-green-200 dark:border-green-900 shadow-sm' 
+            : 'bg-card hover:shadow-md border border-border'
+        }`}
+        onClick={handleCardClick}
+      >
+        {/* Completed Indicator */}
+        {isCompleted && (
+          <div className="absolute top-0 right-0">
+            <div className="w-16 h-16 -mt-8 -mr-8 bg-green-500 rotate-45"></div>
+            <Check className="absolute top-1 right-1 text-white h-3 w-3" />
           </div>
-          
-          <Button 
-            size="sm" 
-            variant={isCompleted ? "outline" : "default"}
-            className={isCompleted 
-              ? "bg-green-100 hover:bg-green-200 text-green-800 border-green-200" 
-              : ""
-            }
-            disabled={isLoading || isCompleted}
-            onClick={handleComplete}
-          >
-            {isLoading ? (
-              <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-            ) : isCompleted ? (
-              <Check className="h-4 w-4 text-green-600" />
-            ) : (
-              <Plus className="h-4 w-4 mr-1" />
-            )}
-            {isCompleted ? "Completed" : "Log it"}
-          </Button>
-        </div>
-      </CardContent>
-      
-      <EcoHabitTooltip 
-        habitId={id}
-        isLogged={isCompleted}
-        notes={logNotes}
-        logId={logId}
-        onLogHabit={onComplete}
-        emoji={emoji}
-        title={title}
-      />
-    </Card>
+        )}
+        
+        <CardContent className="p-4">
+          <div className="flex items-start justify-between">
+            <div className="flex items-center gap-3">
+              <motion.div 
+                className={`w-12 h-12 flex items-center justify-center rounded-full text-xl shadow-sm relative ${
+                  isCompleted 
+                    ? 'bg-green-100 dark:bg-green-800/30' 
+                    : 'bg-primary/10'
+                }`}
+                whileHover={{ scale: 1.05 }}
+                transition={{ type: "spring", stiffness: 400, damping: 10 }}
+              >
+                {emoji}
+                <motion.div 
+                  className={`absolute inset-0 rounded-full ${
+                    isCompleted ? 'bg-green-500/10' : 'bg-primary/5'
+                  }`}
+                  initial={{ scale: 0.8, opacity: 0 }}
+                  animate={{ 
+                    scale: [0.8, 1.2, 1], 
+                    opacity: [0, 0.5, 0] 
+                  }}
+                  transition={{ duration: 2, repeat: Infinity, repeatDelay: 1 }}
+                />
+              </motion.div>
+              
+              <div className="space-y-1">
+                <h3 className="font-medium leading-none">{title}</h3>
+                <p className="text-xs text-muted-foreground flex items-center gap-2">
+                  <span className="flex items-center">
+                    +{points} points
+                  </span>
+                  {logNotes && (
+                    <motion.span 
+                      initial={{ scale: 0.8 }}
+                      animate={{ scale: 1 }}
+                      className="ml-2 text-xs bg-green-100 dark:bg-green-800/30 text-green-800 dark:text-green-200 px-2 py-0.5 rounded-full flex items-center gap-1"
+                    >
+                      <span className="text-xs">📝</span> Note added
+                    </motion.span>
+                  )}
+                </p>
+              </div>
+            </div>
+            
+            <Button 
+              size="sm" 
+              variant={isCompleted ? "outline" : "default"}
+              className={isCompleted 
+                ? "bg-green-100 hover:bg-green-200 text-green-800 border-green-200" 
+                : ""
+              }
+              disabled={isLoading || isCompleted}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleComplete();
+              }}
+            >
+              {isLoading ? (
+                <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+              ) : isCompleted ? (
+                <Check className="h-4 w-4 text-green-600" />
+              ) : (
+                <Plus className="h-4 w-4 mr-1" />
+              )}
+              {isCompleted ? "Completed" : "Log it"}
+            </Button>
+          </div>
+        </CardContent>
+        
+        <EcoHabitTooltip 
+          habitId={id}
+          isLogged={isCompleted}
+          notes={logNotes}
+          logId={logId}
+          onLogHabit={onComplete}
+          emoji={emoji}
+          title={title}
+        />
+      </Card>
+
+      <AnimatePresence>
+        {isNoteDialogOpen && (
+          <Dialog open={isNoteDialogOpen} onOpenChange={setIsNoteDialogOpen}>
+            <DialogContent className="sm:max-w-md">
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 10 }}
+              >
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    <span className="text-xl">{emoji}</span> {title}
+                  </DialogTitle>
+                  <DialogDescription>Your notes for this habit</DialogDescription>
+                </DialogHeader>
+                <div className="mt-4 p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-100 dark:border-green-800">
+                  <p className="text-sm whitespace-pre-wrap">{logNotes || "No notes added"}</p>
+                </div>
+                <div className="mt-4 text-right">
+                  <p className="text-sm text-muted-foreground">+{points} eco-points earned!</p>
+                </div>
+              </motion.div>
+            </DialogContent>
+          </Dialog>
+        )}
+      </AnimatePresence>
+    </>
   );
 };
 
