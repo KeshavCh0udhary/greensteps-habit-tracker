@@ -50,6 +50,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setIsSupabaseConnected(true);
         setSession(data.session);
         setUser(data.session?.user ?? null);
+        
+        // Log the session state for debugging
+        console.log("Initial session state:", {
+          session: data.session,
+          user: data.session?.user ?? null,
+          isActive: !!data.session,
+        });
       } catch (error) {
         console.error("Error loading auth:", error);
         setIsSupabaseConnected(false);
@@ -60,15 +67,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     setupAuth();
 
-    // Only set up auth state change listener if Supabase is connected
+    // Set up auth state change listener
     let subscription: { unsubscribe: () => void } | undefined;
     
     try {
       const { data } = supabase.auth.onAuthStateChange(
-        async (event, session) => {
-          console.log("Auth state changed:", event, session?.user?.email);
-          setSession(session);
-          setUser(session?.user ?? null);
+        async (event, newSession) => {
+          console.log("Auth state changed:", event, newSession?.user?.email);
+          
+          // Update the session and user state
+          setSession(newSession);
+          setUser(newSession?.user ?? null);
           setLoading(false);
           
           // Handle auth state changes for redirects
@@ -142,6 +151,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     
     try {
+      console.log("Attempting to sign in with email:", email);
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -151,6 +161,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw error;
       }
 
+      // Session management is handled by the onAuthStateChange listener
+      console.log("Sign in successful");
       return { error: null, success: true };
     } catch (error) {
       console.error("Error signing in:", error);
@@ -160,8 +172,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     if (isSupabaseConnected) {
-      await supabase.auth.signOut();
-      // The navigation to landing page will be handled by the AuthLogout component
+      console.log("Attempting to sign out");
+      try {
+        await supabase.auth.signOut();
+        console.log("Sign out successful");
+        // Redirect will be handled by the auth state change listener
+      } catch (error) {
+        console.error("Error signing out:", error);
+        toast.error("Failed to sign out", {
+          description: "Please try again later."
+        });
+      }
     }
   };
 
