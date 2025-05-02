@@ -76,7 +76,7 @@ const HeroSection = () => {
           initial={{ opacity: 0, scale: 0 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 1, delay: 0.5 }}
-          style={{ animationDelay: "0.5s" }}
+          style={{ position: 'absolute', animationDelay: "0.5s" }}
         >
           <motion.span
             animate={{ 
@@ -99,6 +99,7 @@ const HeroSection = () => {
           initial={{ opacity: 0, scale: 0 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 1, delay: 0.7 }}
+          style={{ position: 'absolute' }}
         >
           <motion.span
             animate={{ 
@@ -121,6 +122,7 @@ const HeroSection = () => {
           initial={{ opacity: 0, scale: 0 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 1, delay: 0.9 }}
+          style={{ position: 'absolute' }}
         >
           <motion.span
             animate={{ 
@@ -143,6 +145,7 @@ const HeroSection = () => {
           initial={{ opacity: 0, scale: 0 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 1, delay: 1.1 }}
+          style={{ position: 'absolute' }}
         >
           <motion.span
             animate={{ 

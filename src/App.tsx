@@ -29,6 +29,8 @@ import Privacy from "./pages/Privacy";
 import Contact from "./pages/Contact";
 import Careers from "./pages/Careers";
 import UserProfile from "./pages/UserProfile";
+import Habits from "./pages/Habits";
+import Progress from "./pages/Progress";
 import { toast } from "sonner";
 
 const queryClient = new QueryClient();
@@ -130,6 +132,10 @@ const App = () => {
                   </DashboardLayout>
                 } 
               />
+
+              {/* New Routes for Habits and Progress */}
+              <Route path="/habits" element={<Habits />} />
+              <Route path="/progress" element={<Progress />} />
               
               {/* 404 Page */}
               <Route path="*" element={<NotFound />} />
