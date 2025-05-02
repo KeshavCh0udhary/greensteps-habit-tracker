@@ -2,8 +2,6 @@
 
 A modern, eco-friendly habit tracking application that helps users build sustainable habits while contributing to a greener planet.
 
-![GreenSteps Logo](public/logo.svg)
-
 ## 🌟 Features
 
 - **Habit Tracking**: Log and track your daily eco-friendly habits
