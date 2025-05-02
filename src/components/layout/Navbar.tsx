@@ -8,6 +8,16 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth";
 import AuthModal from "@/components/auth/AuthModal";
 import { motion } from "framer-motion";
+import { 
+  Avatar,
+  AvatarImage,
+  AvatarFallback 
+} from "@/components/ui/avatar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 const Navbar = () => {
   const location = useLocation();
@@ -90,11 +100,59 @@ const Navbar = () => {
         <div className="flex items-center gap-2">
           <ThemeToggle />
           {user ? (
-            <div className="hidden md:flex items-center space-x-2">
+            <div className="hidden md:flex items-center space-x-3">
               <Link to="/dashboard">
                 <Button variant="outline">Dashboard</Button>
               </Link>
-              <Button onClick={signOut} variant="ghost">Log out</Button>
+              
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    className="relative p-0 h-10 w-10 rounded-full overflow-hidden border"
+                  >
+                    <Avatar>
+                      <AvatarImage 
+                        src={user.user_metadata?.avatar_url} 
+                        alt={user.user_metadata?.display_name || user.email} 
+                      />
+                      <AvatarFallback className="bg-primary/10 text-primary text-sm">
+                        {user.user_metadata?.display_name?.charAt(0) || user.email?.charAt(0) || "U"}
+                      </AvatarFallback>
+                    </Avatar>
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-56 mt-2" align="end">
+                  <div className="space-y-3">
+                    <div className="border-b pb-2">
+                      <p className="text-sm font-medium">
+                        {user.user_metadata?.display_name || user.email?.split('@')[0]}
+                      </p>
+                      <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Link 
+                        to="/profile" 
+                        className="block text-sm px-2 py-1.5 rounded-md hover:bg-accent transition-colors"
+                      >
+                        Your Profile
+                      </Link>
+                      <Link 
+                        to="/dashboard" 
+                        className="block text-sm px-2 py-1.5 rounded-md hover:bg-accent transition-colors"
+                      >
+                        Dashboard
+                      </Link>
+                      <button 
+                        onClick={signOut} 
+                        className="w-full text-left text-sm px-2 py-1.5 rounded-md text-red-500 hover:bg-red-100 dark:hover:bg-red-900/20 transition-colors"
+                      >
+                        Sign out
+                      </button>
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
             </div>
           ) : (
             <div className="hidden md:flex items-center space-x-2">
@@ -146,6 +204,22 @@ const Navbar = () => {
 
           {user ? (
             <div className="flex flex-col pt-2 space-y-2 border-t border-border/50">
+              <Link 
+                to="/profile" 
+                className="flex items-center px-4 py-2 rounded-lg hover:bg-accent/50"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                <Avatar className="h-6 w-6 mr-2">
+                  <AvatarImage 
+                    src={user.user_metadata?.avatar_url} 
+                    alt={user.user_metadata?.display_name || user.email} 
+                  />
+                  <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                    {user.user_metadata?.display_name?.charAt(0) || user.email?.charAt(0) || "U"}
+                  </AvatarFallback>
+                </Avatar>
+                Your Profile
+              </Link>
               <Link to="/dashboard" onClick={() => setIsMenuOpen(false)}>
                 <Button variant="outline" className="w-full">
                   Dashboard

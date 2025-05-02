@@ -18,6 +18,7 @@ import { useForm } from "react-hook-form";
 import { showConfetti, showStreakConfetti } from "@/lib/confetti";
 import CalendarView from "@/components/eco/CalendarView";
 import { motion } from "framer-motion";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 // Types for our data
 interface Habit {
@@ -56,19 +57,29 @@ interface HabitWithLogStatus extends Habit {
 // Define log data type for calendar
 type LogDataRecord = Record<string, { habits: string[], total_points: number }>;
 
+// Available emoji choices for custom habits
+const emojiChoices = [
+  "🚲", "🌱", "🌿", "🌳", "🌞", "🚶‍♂️", "🔋", "♻️", "🥗", 
+  "🚿", "🌊", "📱", "💡", "🥤", "👜", "🚰", "🍽️", "🥬"
+];
+
 const Dashboard = () => {
   const { user } = useAuth();
   const [date, setDate] = useState(new Date());
   const formattedDate = format(date, 'yyyy-MM-dd');
   const [showAddHabitDialog, setShowAddHabitDialog] = useState(false);
+  const [selectedEmoji, setSelectedEmoji] = useState("🌱");
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   
-  const { register, handleSubmit, reset } = useForm({
+  const { register, handleSubmit, reset, setValue, watch } = useForm({
     defaultValues: {
       title: "",
       emoji: "🌱",
       eco_points: 1
     }
   });
+
+  const formEmoji = watch("emoji");
 
   // Animation variants
   const containerVariants = {
@@ -301,6 +312,8 @@ const Dashboard = () => {
           description: "Check your profile to see your new achievement!"
         });
       }
+
+      return Promise.resolve();
     } catch (error) {
       console.error("Error logging habit:", error);
       return Promise.reject(error);
@@ -337,8 +350,39 @@ const Dashboard = () => {
       });
     }
   };
+
+  // Welcome user - only show when user logs in
+  useEffect(() => {
+    if (user && profile) {
+      // Check if this is the first time loading with this user in this session
+      const key = `welcomed-${user.id}`;
+      const hasBeenWelcomed = sessionStorage.getItem(key);
+      
+      if (!hasBeenWelcomed) {
+        // Show welcome toast with custom animation after a slight delay
+        setTimeout(() => {
+          toast.success(
+            `Welcome back, ${profile?.display_name || user.email?.split('@')[0] || 'Green Warrior'}! 🌿`, 
+            {
+              description: `Your eco-streak: ${profile.current_streak} days 🔥`,
+              duration: 5000,
+              position: "top-center",
+            }
+          );
+          // Mark as welcomed for this session
+          sessionStorage.setItem(key, 'true');
+        }, 1000);
+      }
+    }
+  }, [user, profile]);
   
   const isLoading = habitsLoading || logsLoading || profileLoading;
+
+  const handleEmojiSelect = (emoji: string) => {
+    setValue("emoji", emoji);
+    setSelectedEmoji(emoji);
+    setShowEmojiPicker(false);
+  };
 
   return (
     <div className="container mx-auto p-4 md:p-6 bg-gradient-to-br from-green-50/50 to-blue-50/50 dark:from-green-950/30 dark:to-blue-950/30 min-h-screen">
@@ -440,11 +484,32 @@ const Dashboard = () => {
                         <div className="grid grid-cols-4 gap-4">
                           <div className="col-span-1">
                             <Label htmlFor="emoji">Emoji</Label>
-                            <Input
-                              id="emoji"
-                              className="text-center text-xl"
-                              {...register("emoji")}
-                            />
+                            <Popover open={showEmojiPicker} onOpenChange={setShowEmojiPicker}>
+                              <PopoverTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  className="text-center text-xl w-full h-10"
+                                  type="button"
+                                >
+                                  {formEmoji}
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-64 p-2">
+                                <div className="grid grid-cols-6 gap-2">
+                                  {emojiChoices.map((emoji) => (
+                                    <Button
+                                      key={emoji}
+                                      variant="ghost"
+                                      className="h-10 w-10 p-0 text-xl"
+                                      onClick={() => handleEmojiSelect(emoji)}
+                                    >
+                                      {emoji}
+                                    </Button>
+                                  ))}
+                                </div>
+                              </PopoverContent>
+                            </Popover>
+                            <input type="hidden" {...register("emoji")} />
                           </div>
                           <div className="col-span-3">
                             <Label htmlFor="title">Habit Title</Label>
@@ -524,6 +589,8 @@ const Dashboard = () => {
                       title={habit.title}
                       points={habit.eco_points}
                       isCompleted={habit.isLogged}
+                      logId={habit.logId}
+                      logNotes={habit.logNotes}
                       onComplete={handleLogHabit}
                     />
                   </motion.div>
@@ -533,7 +600,7 @@ const Dashboard = () => {
           </motion.div>
         </TabsContent>
 
-        {/* Calendar Tab */}
+        {/* Calendar Tab - Fix duplication issue */}
         <TabsContent value="calendar">
           <motion.div 
             initial={{ opacity: 0, y: 10 }}

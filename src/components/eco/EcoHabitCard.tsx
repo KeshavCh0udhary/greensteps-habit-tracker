@@ -1,128 +1,129 @@
 
-import { useState } from "react";
-import { Card } from "@/components/ui/card";
+import { useState } from 'react';
+import { motion } from 'framer-motion';
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import { Check, ChevronDown } from "lucide-react";
-import { Textarea } from "@/components/ui/textarea";
-import { toast } from "sonner";
-import { useForm } from "react-hook-form";
+import { Check, Plus } from "lucide-react";
+import EcoHabitTooltip from './EcoHabitTooltip';
 
 interface EcoHabitCardProps {
   id: string;
-  emoji: string;
   title: string;
+  emoji: string; 
   points: number;
-  isCompleted?: boolean;
-  onComplete?: (id: string, notes: string) => Promise<void>;
+  isCompleted: boolean;
+  logId?: string;
+  logNotes?: string | null;
+  onComplete: (habitId: string, notes: string) => Promise<void>;
 }
 
-const EcoHabitCard = ({
-  id,
-  emoji,
-  title,
-  points,
-  isCompleted = false,
-  onComplete,
-}: EcoHabitCardProps) => {
-  const [isExpanded, setIsExpanded] = useState(false);
+const EcoHabitCard: React.FC<EcoHabitCardProps> = ({ 
+  id, 
+  title, 
+  emoji, 
+  points, 
+  isCompleted,
+  logId,
+  logNotes,
+  onComplete 
+}) => {
   const [isLoading, setIsLoading] = useState(false);
-  const { register, handleSubmit, reset } = useForm({
-    defaultValues: { notes: "" },
-  });
 
-  const handleComplete = async (data: { notes: string }) => {
-    if (!onComplete || isCompleted) return;
-    
-    setIsLoading(true);
-    try {
-      await onComplete(id, data.notes);
-      toast.success("Habit logged successfully!", {
-        description: `You earned ${points} eco-points!`,
-      });
-      reset();
-      setIsExpanded(false);
-    } catch (error) {
-      console.error("Failed to log habit:", error);
-      toast.error("Failed to log habit", {
-        description: "Please try again later.",
-      });
-    } finally {
-      setIsLoading(false);
+  const handleComplete = async () => {
+    if (!isCompleted) {
+      try {
+        setIsLoading(true);
+        await onComplete(id, "");
+      } catch (error) {
+        console.error("Failed to log habit:", error);
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
   return (
-    <Card
-      className={cn(
-        "overflow-hidden transition-all duration-300 border-2",
-        isCompleted
-          ? "border-green-500 dark:border-green-600 bg-green-50/50 dark:bg-green-900/10"
-          : "border-border hover:border-muted-foreground/30"
-      )}
-    >
-      <div className="p-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div
-            className={cn(
-              "w-10 h-10 rounded-full flex items-center justify-center text-xl",
-              isCompleted
-                ? "bg-green-100 dark:bg-green-800/30"
-                : "bg-muted"
-            )}
-          >
-            {emoji}
-          </div>
-          <div>
-            <h3 className="font-medium text-lg">{title}</h3>
-            <p className="text-sm text-muted-foreground">
-              {points} eco-point{points !== 1 ? "s" : ""}
-            </p>
-          </div>
+    <Card className={`relative overflow-hidden transition-all ${
+      isCompleted 
+        ? 'bg-primary-foreground/50 border-green-200 dark:border-green-900 shadow-sm' 
+        : 'bg-card hover:shadow-md border border-border'
+    }`}>
+      {/* Completed Indicator */}
+      {isCompleted && (
+        <div className="absolute top-0 right-0">
+          <div className="w-16 h-16 -mt-8 -mr-8 bg-green-500 rotate-45"></div>
+          <Check className="absolute top-1 right-1 text-white h-3 w-3" />
         </div>
-        {isCompleted ? (
-          <div className="bg-green-100 dark:bg-green-800/30 text-green-700 dark:text-green-300 rounded-full p-1.5">
-            <Check className="h-5 w-5" />
-          </div>
-        ) : (
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setIsExpanded(!isExpanded)}
-            aria-label={isExpanded ? "Collapse" : "Expand"}
-          >
-            <ChevronDown
-              className={cn(
-                "h-5 w-5 transition-transform",
-                isExpanded ? "transform rotate-180" : ""
-              )}
-            />
-          </Button>
-        )}
-      </div>
-
-      {!isCompleted && isExpanded && (
-        <div className="px-4 pb-4 pt-2 space-y-3">
-          <form onSubmit={handleSubmit(handleComplete)}>
-            <Textarea
-              placeholder="Add optional notes (max 200 characters)"
-              className="resize-none"
-              maxLength={200}
-              disabled={isLoading}
-              {...register("notes")}
-            />
-            <div className="flex justify-end mt-3">
-              <Button
-                type="submit"
-                className="bg-green-600 hover:bg-green-700"
-                disabled={isLoading}
-              >
-                {isLoading ? "Logging..." : "Log this habit"}
-              </Button>
+      )}
+      
+      <CardContent className="p-4">
+        <div className="flex items-start justify-between">
+          <div className="flex items-center gap-3">
+            <motion.div 
+              className={`w-12 h-12 flex items-center justify-center rounded-full text-xl shadow-sm relative ${
+                isCompleted 
+                  ? 'bg-green-100 dark:bg-green-800/30' 
+                  : 'bg-primary/10'
+              }`}
+              whileHover={{ scale: 1.05 }}
+              transition={{ type: "spring", stiffness: 400, damping: 10 }}
+            >
+              {emoji}
+              <motion.div 
+                className={`absolute inset-0 rounded-full ${
+                  isCompleted ? 'bg-green-500/10' : 'bg-primary/5'
+                }`}
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ 
+                  scale: [0.8, 1.2, 1], 
+                  opacity: [0, 0.5, 0] 
+                }}
+                transition={{ duration: 2, repeat: Infinity, repeatDelay: 1 }}
+              />
+            </motion.div>
+            
+            <div className="space-y-1">
+              <h3 className="font-medium leading-none">{title}</h3>
+              <p className="text-xs text-muted-foreground">
+                +{points} points
+                {logNotes && (
+                  <span className="ml-2 text-xs text-primary">📝 Note added</span>
+                )}
+              </p>
             </div>
-          </form>
+          </div>
+          
+          <Button 
+            size="sm" 
+            variant={isCompleted ? "outline" : "default"}
+            className={isCompleted 
+              ? "bg-green-100 hover:bg-green-200 text-green-800 border-green-200" 
+              : ""
+            }
+            disabled={isLoading || isCompleted}
+            onClick={handleComplete}
+          >
+            {isLoading ? (
+              <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+            ) : isCompleted ? (
+              <Check className="h-4 w-4 text-green-600" />
+            ) : (
+              <Plus className="h-4 w-4 mr-1" />
+            )}
+            {isCompleted ? "Completed" : "Log it"}
+          </Button>
         </div>
-      )}
+      </CardContent>
+      
+      <EcoHabitTooltip 
+        habitId={id}
+        isLogged={isCompleted}
+        notes={logNotes}
+        logId={logId}
+        onLogHabit={onComplete}
+        emoji={emoji}
+        title={title}
+      />
     </Card>
   );
 };

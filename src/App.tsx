@@ -29,6 +29,7 @@ import Privacy from "./pages/Privacy";
 import Contact from "./pages/Contact";
 import Careers from "./pages/Careers";
 import UserProfile from "./pages/UserProfile";
+import { toast } from "sonner";
 
 const queryClient = new QueryClient();
 
@@ -43,6 +44,27 @@ const App = () => {
     } else {
       document.documentElement.classList.remove("dark");
     }
+    
+    // Welcome back toast - only shown when returning from another session
+    const lastVisit = localStorage.getItem("lastVisit");
+    const now = new Date().toDateString();
+    
+    if (lastVisit && lastVisit !== now) {
+      // User is returning from a previous session
+      setTimeout(() => {
+        toast.success(
+          "Welcome back to GreenSteps! 🌿", 
+          {
+            description: "Ready to continue your eco-journey today?",
+            duration: 5000,
+            className: "welcome-toast",
+          }
+        );
+      }, 1500);
+    }
+    
+    // Update last visit timestamp
+    localStorage.setItem("lastVisit", now);
   }, []);
 
   return (
