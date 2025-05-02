@@ -67,14 +67,7 @@ const LoginForm = () => {
   };
 
   return (
-    <div className="w-full max-w-md space-y-6 p-6 bg-card rounded-lg shadow-md eco-card">
-      <div className="space-y-2 text-center">
-        <h2 className="text-2xl font-bold">Welcome back</h2>
-        <p className="text-muted-foreground">
-          Enter your email to sign in to your account
-        </p>
-      </div>
-      
+    <div className="w-full space-y-6">
       <OAuthButtons redirectTo="/dashboard" />
       
       <Form {...form}>

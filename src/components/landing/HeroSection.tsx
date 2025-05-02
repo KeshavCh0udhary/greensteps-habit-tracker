@@ -2,8 +2,12 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
+import AuthModal from "@/components/auth/AuthModal";
+import { useAuth } from "@/lib/auth";
 
 const HeroSection = () => {
+  const { user } = useAuth();
+
   return (
     <section className="relative overflow-hidden pt-16 md:pt-24 lg:pt-32">
       <div className="container mx-auto px-4 relative z-10">
@@ -17,12 +21,21 @@ const HeroSection = () => {
             we can make for our planet, one green step at a time.
           </p>
           <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center animate-fade-in-up" style={{ animationDelay: "0.4s" }}>
-            <Link to="/signup">
-              <Button size="lg" className="w-full sm:w-auto text-lg">
-                Get Started
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-            </Link>
+            {user ? (
+              <Link to="/dashboard">
+                <Button size="lg" className="w-full sm:w-auto text-lg">
+                  Dashboard
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+              </Link>
+            ) : (
+              <AuthModal defaultTab="signup">
+                <Button size="lg" className="w-full sm:w-auto text-lg">
+                  Get Started
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+              </AuthModal>
+            )}
             <Link to="/about">
               <Button size="lg" variant="outline" className="w-full sm:w-auto text-lg">
                 Learn More

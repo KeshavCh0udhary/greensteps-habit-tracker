@@ -77,14 +77,7 @@ const SignupForm = () => {
   };
 
   return (
-    <div className="w-full max-w-md space-y-6 p-6 bg-card rounded-lg shadow-md eco-card">
-      <div className="space-y-2 text-center">
-        <h2 className="text-2xl font-bold">Create an account</h2>
-        <p className="text-muted-foreground">
-          Sign up to track your eco-friendly habits
-        </p>
-      </div>
-      
+    <div className="w-full space-y-6">
       <OAuthButtons redirectTo="/dashboard" />
       
       <Form {...form}>

@@ -1,18 +1,23 @@
 
 import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
+import { toast } from "sonner";
 
 export function AuthLogout() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
   
   useEffect(() => {
-    if (!user) {
-      // Redirect to landing page when logged out
+    // Only redirect on protected routes when not authenticated
+    if (!user && location.pathname.startsWith("/dashboard")) {
+      toast.info("Session ended", {
+        description: "Please log in to continue."
+      });
       navigate("/");
     }
-  }, [user, navigate]);
+  }, [user, navigate, location.pathname]);
   
   return null;
 }

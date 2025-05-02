@@ -5,12 +5,14 @@ import ThemeToggle from "./ThemeToggle";
 import { Button } from "@/components/ui/button";
 import { ChevronDown } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useAuth } from "@/lib/auth";
+import AuthModal from "@/components/auth/AuthModal";
 
 const Navbar = () => {
   const location = useLocation();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const isAuthenticated = location.pathname.startsWith("/dashboard");
+  const { user, signOut } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -66,18 +68,21 @@ const Navbar = () => {
 
         <div className="flex items-center gap-2">
           <ThemeToggle />
-          {isAuthenticated ? (
-            <Link to="/dashboard">
-              <Button>Dashboard</Button>
-            </Link>
+          {user ? (
+            <div className="hidden md:flex items-center space-x-2">
+              <Link to="/dashboard">
+                <Button variant="outline">Dashboard</Button>
+              </Link>
+              <Button onClick={signOut} variant="ghost">Log out</Button>
+            </div>
           ) : (
             <div className="hidden md:flex items-center space-x-2">
-              <Link to="/login">
+              <AuthModal defaultTab="login">
                 <Button variant="outline">Log in</Button>
-              </Link>
-              <Link to="/signup">
+              </AuthModal>
+              <AuthModal defaultTab="signup">
                 <Button>Sign up</Button>
-              </Link>
+              </AuthModal>
             </div>
           )}
           <button
@@ -118,16 +123,35 @@ const Navbar = () => {
             </Link>
           ))}
 
-          {!isAuthenticated && (
+          {user ? (
             <div className="flex flex-col pt-2 space-y-2 border-t border-border/50">
-              <Link to="/login" onClick={() => setIsMenuOpen(false)}>
+              <Link to="/dashboard" onClick={() => setIsMenuOpen(false)}>
                 <Button variant="outline" className="w-full">
-                  Log in
+                  Dashboard
                 </Button>
               </Link>
-              <Link to="/signup" onClick={() => setIsMenuOpen(false)}>
-                <Button className="w-full">Sign up</Button>
-              </Link>
+              <Button 
+                onClick={() => {
+                  signOut();
+                  setIsMenuOpen(false);
+                }}
+                className="w-full"
+              >
+                Log out
+              </Button>
+            </div>
+          ) : (
+            <div className="flex flex-col pt-2 space-y-2 border-t border-border/50">
+              <AuthModal defaultTab="login">
+                <Button variant="outline" className="w-full" onClick={() => setIsMenuOpen(false)}>
+                  Log in
+                </Button>
+              </AuthModal>
+              <AuthModal defaultTab="signup">
+                <Button className="w-full" onClick={() => setIsMenuOpen(false)}>
+                  Sign up
+                </Button>
+              </AuthModal>
             </div>
           )}
         </div>
