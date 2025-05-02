@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -816,41 +815,3 @@ const Dashboard = () => {
                       <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center">
                         <Leaf className="h-3 w-3 text-primary" />
                       </div>
-                      Total Points
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-3xl font-bold">{profile?.total_points || 0}</div>
-                    <p className="text-xs text-muted-foreground mt-1">Your lifetime eco-impact score</p>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            </div>
-          </motion.div>
-        </TabsContent>
-
-        {/* Community Tab */}
-        <TabsContent value="community">
-          <motion.div 
-            className="space-y-6"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5 }}
-          >
-            <Card>
-              <CardHeader>
-                <CardTitle>Community Impact</CardTitle>
-                <CardDescription>See how our community is making a difference</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p>Community stats will be available soon!</p>
-              </CardContent>
-            </Card>
-          </motion.div>
-        </TabsContent>
-      </Tabs>
-    </div>
-  );
-};
-
-export default Dashboard;
