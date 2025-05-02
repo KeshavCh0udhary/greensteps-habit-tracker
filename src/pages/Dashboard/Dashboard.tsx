@@ -12,6 +12,7 @@ import { Link } from "react-router-dom";
 import { showConfetti, showStreakConfetti } from "@/lib/confetti";
 import { toast } from "sonner";
 import { LogDataRecord } from "@/types/interfaces";
+import { sampleCommunities } from "@/lib/sampleData";
 
 // Import components
 import StatsCard from "@/components/stats/StatsCard";
@@ -111,20 +112,27 @@ const Dashboard = () => {
     enabled: !!user
   });
 
-  // Fetch active days count
+  // Fetch active days count - FIXED to count distinct days
   const { data: activeDaysCount, isLoading: activeDaysLoading } = useQuery({
     queryKey: ['active-days', user?.id],
     queryFn: async () => {
       if (!user) return 0;
       
-      const { data, error, count } = await supabase
+      const { data, error } = await supabase
         .from('daily_logs')
-        .select('date', { count: 'exact', head: true })
+        .select('date')
         .eq('user_id', user.id)
         .order('date', { ascending: false });
         
-      if (error) throw error;
-      return count || 0;
+      if (error) {
+        console.error("Error fetching active days:", error);
+        throw error;
+      }
+      
+      // Count distinct days
+      const distinctDays = new Set();
+      data?.forEach(log => distinctDays.add(log.date));
+      return distinctDays.size;
     },
     enabled: !!user
   });

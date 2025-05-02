@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,52 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import CommunityCard from "@/components/community/CommunityCard";
 import { useQuery } from "@tanstack/react-query";
-
-// Sample community data - in a real app, you would fetch this from Supabase
-const sampleCommunities = [
-  {
-    id: "1",
-    name: "Eco Warriors",
-    description: "For those committed to fighting climate change through daily actions",
-    icon: "🌍",
-    memberCount: 345
-  },
-  {
-    id: "2",
-    name: "Zero Waste Living",
-    description: "Tips and support for reducing waste in everyday life",
-    icon: "♻️",
-    memberCount: 289
-  },
-  {
-    id: "3",
-    name: "Plant-Based Diet",
-    description: "Transitioning to plant-based eating for environmental impact",
-    icon: "🌱",
-    memberCount: 423
-  },
-  {
-    id: "4",
-    name: "Clean Energy Advocates",
-    description: "Promoting renewable energy solutions and reducing carbon footprint",
-    icon: "⚡",
-    memberCount: 178
-  },
-  {
-    id: "5",
-    name: "Ocean Guardians",
-    description: "Focused on protecting marine life and reducing plastic pollution",
-    icon: "🌊",
-    memberCount: 256
-  },
-  {
-    id: "6",
-    name: "Sustainable Transport",
-    description: "Exploring car-free lifestyles and low-impact transportation",
-    icon: "🚲",
-    memberCount: 145
-  }
-];
+import { sampleCommunities } from "@/lib/sampleData";
 
 interface UserCommunity {
   id: string;

@@ -1,7 +1,7 @@
 
 import { motion } from "framer-motion";
 
-// Updated partner logos with valid URLs
+// Fixed partner logos with valid URLs
 const partnerLogos = [
   {
     name: "EarthSave Foundation",
@@ -29,7 +29,7 @@ const partnerLogos = [
   }
 ];
 
-// Eco warrior testimonials data with valid avatar URLs
+// Fixed eco warrior testimonials data with valid avatar URLs
 const ecoWarriors = [
   {
     name: "Aisha K.",

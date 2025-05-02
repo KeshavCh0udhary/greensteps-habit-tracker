@@ -8,7 +8,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { DialogFooter } from "@/components/ui/dialog";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
-import { getSupabaseClient } from "@/lib/supabase"; // Update import to use getSupabaseClient
+import { getSupabaseClient } from "@/lib/supabase"; 
 import { motion } from "framer-motion";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { z } from "zod";
@@ -25,7 +25,7 @@ const emojiChoices = [
 const habitSchema = z.object({
   title: z.string().min(1, "Habit title is required"),
   emoji: z.string().min(1, "Please select an emoji"),
-  eco_points: z.number()
+  eco_points: z.coerce.number()
     .min(0.5, "Minimum value is 0.5")
     .max(5, "Maximum value is 5")
 });
@@ -38,7 +38,7 @@ interface CreateHabitFormProps {
 const CreateHabitForm = ({ onSuccess, onCancel }: CreateHabitFormProps) => {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const supabase = getSupabaseClient(); // Get the client using the function
+  const supabase = getSupabaseClient();
   
   const form = useForm<HabitFormData>({
     resolver: zodResolver(habitSchema),
@@ -61,7 +61,6 @@ const CreateHabitForm = ({ onSuccess, onCancel }: CreateHabitFormProps) => {
       
       console.log("Creating habit with data:", data);
       
-      // Insert the new habit into the database
       const { error, data: newHabit } = await supabase
         .from('eco_habits')
         .insert([{
@@ -196,7 +195,6 @@ const CreateHabitForm = ({ onSuccess, onCancel }: CreateHabitFormProps) => {
                   max="5"
                   step="0.5"
                   {...field}
-                  onChange={event => field.onChange(parseFloat(event.target.value))}
                 />
               </FormControl>
               <p className="text-xs text-muted-foreground mt-1">
