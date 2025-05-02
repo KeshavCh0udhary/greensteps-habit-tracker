@@ -116,8 +116,10 @@ const initSupabase = () => {
   const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
   if (!supabaseUrl || !supabaseAnonKey) {
-    console.error('Supabase URL and Anon Key must be provided. Please connect your Lovable project to Supabase.');
-    throw new Error('Missing Supabase credentials');
+    console.warn('Supabase credentials are missing. Please connect your project to Supabase for full functionality.');
+    // Create a mock client with empty URL and key that will fail gracefully
+    // This prevents the app from crashing while still allowing rendering
+    return createClient<Database>('https://placeholder-url.supabase.co', 'placeholder-key');
   }
 
   supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);

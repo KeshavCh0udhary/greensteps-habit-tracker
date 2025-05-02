@@ -20,6 +20,7 @@ type AuthContextType = {
     error: Error | null;
     success: boolean;
   }>;
+  isSupabaseConnected: boolean;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -28,21 +29,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isSupabaseConnected, setIsSupabaseConnected] = useState(false);
   const supabase = getSupabaseClient();
 
   useEffect(() => {
     const setupAuth = async () => {
       try {
-        const { data: { session }, error } = await supabase.auth.getSession();
+        // Check if Supabase is properly connected by testing a basic API call
+        const { data, error } = await supabase.auth.getSession();
         
-        if (error) {
-          throw error;
+        if (error && error.message.includes('Failed to fetch')) {
+          console.warn('Supabase connection not available.');
+          setIsSupabaseConnected(false);
+          setLoading(false);
+          return;
         }
 
-        setSession(session);
-        setUser(session?.user ?? null);
+        setIsSupabaseConnected(true);
+        setSession(data.session);
+        setUser(data.session?.user ?? null);
       } catch (error) {
         console.error("Error loading auth:", error);
+        setIsSupabaseConnected(false);
       } finally {
         setLoading(false);
       }
@@ -50,20 +58,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     setupAuth();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        setLoading(false);
-      }
-    );
+    // Only set up auth state change listener if Supabase is connected
+    let subscription: { unsubscribe: () => void } | undefined;
+    
+    try {
+      const { data } = supabase.auth.onAuthStateChange(
+        (_event, session) => {
+          setSession(session);
+          setUser(session?.user ?? null);
+          setLoading(false);
+        }
+      );
+      subscription = data.subscription;
+    } catch (error) {
+      console.warn('Failed to set up auth state change listener:', error);
+    }
 
     return () => {
-      subscription.unsubscribe();
+      subscription?.unsubscribe();
     };
   }, []);
 
   const signUp = async (email: string, password: string) => {
+    if (!isSupabaseConnected) {
+      return { 
+        error: new Error('Supabase is not connected. Please connect your project to Supabase first.'),
+        success: false 
+      };
+    }
+    
     try {
       const { error } = await supabase.auth.signUp({
         email,
@@ -85,6 +108,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signIn = async (email: string, password: string) => {
+    if (!isSupabaseConnected) {
+      return { 
+        error: new Error('Supabase is not connected. Please connect your project to Supabase first.'),
+        success: false 
+      };
+    }
+    
     try {
       const { error } = await supabase.auth.signInWithPassword({
         email,
@@ -103,10 +133,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    if (isSupabaseConnected) {
+      await supabase.auth.signOut();
+    }
   };
 
   const resetPassword = async (email: string) => {
+    if (!isSupabaseConnected) {
+      return { 
+        error: new Error('Supabase is not connected. Please connect your project to Supabase first.'),
+        success: false 
+      };
+    }
+    
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/auth/reset-password`,
@@ -131,6 +170,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signIn,
     signOut,
     resetPassword,
+    isSupabaseConnected,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

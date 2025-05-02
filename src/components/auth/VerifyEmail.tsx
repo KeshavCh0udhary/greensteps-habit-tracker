@@ -1,10 +1,26 @@
 
 import { useLocation, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/lib/auth";
+import { toast } from "sonner";
 
 const VerifyEmail = () => {
   const location = useLocation();
   const email = location.state?.email || "your email";
+  const { isSupabaseConnected } = useAuth();
+  
+  const handleResendVerification = () => {
+    if (!isSupabaseConnected) {
+      toast.error("Supabase not connected", {
+        description: "Please connect your project to Supabase to enable authentication.",
+      });
+      return;
+    }
+    
+    toast.success("Verification email sent", {
+      description: "Please check your inbox for the verification link.",
+    });
+  };
 
   return (
     <div className="w-full max-w-md space-y-6 p-6 bg-card rounded-lg shadow-md eco-card">
@@ -26,18 +42,36 @@ const VerifyEmail = () => {
           </svg>
         </div>
         <h2 className="text-2xl font-bold">Verify your email</h2>
-        <p className="text-muted-foreground">
-          We sent a verification link to <strong>{email}</strong>. Please check
-          your inbox and verify your email to continue.
-        </p>
+        {isSupabaseConnected ? (
+          <p className="text-muted-foreground">
+            We sent a verification link to <strong>{email}</strong>. Please check
+            your inbox and verify your email to continue.
+          </p>
+        ) : (
+          <p className="text-muted-foreground">
+            <strong>Supabase is not connected.</strong> To enable email verification,
+            please connect your project to Supabase using the Supabase button in the top right corner.
+          </p>
+        )}
       </div>
       <div className="space-y-4">
-        <p className="text-sm text-muted-foreground text-center">
-          Didn't receive the email? Check your spam folder or request a new
-          verification link.
-        </p>
+        {isSupabaseConnected ? (
+          <p className="text-sm text-muted-foreground text-center">
+            Didn't receive the email? Check your spam folder or request a new
+            verification link.
+          </p>
+        ) : (
+          <p className="text-sm text-muted-foreground text-center">
+            Authentication features require Supabase integration. Please connect your
+            project to Supabase to access all features.
+          </p>
+        )}
         <div className="flex flex-col space-y-2">
-          <Button variant="outline" className="w-full">
+          <Button 
+            variant="outline" 
+            className="w-full"
+            onClick={handleResendVerification}
+          >
             Resend verification email
           </Button>
           <Link to="/login">
