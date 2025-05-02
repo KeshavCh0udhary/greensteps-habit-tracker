@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
@@ -297,29 +296,13 @@ const Progress = () => {
                   </CardDescription>
                 </div>
                 <div>
-                  <TabsList className="bg-muted/50">
-                    <TabsTrigger 
-                      value="week" 
-                      onClick={() => setViewOption('week')}
-                      className={viewOption === 'week' ? 'bg-background' : ''}
-                    >
-                      Week
-                    </TabsTrigger>
-                    <TabsTrigger 
-                      value="month" 
-                      onClick={() => setViewOption('month')}
-                      className={viewOption === 'month' ? 'bg-background' : ''}
-                    >
-                      Month
-                    </TabsTrigger>
-                    <TabsTrigger 
-                      value="year" 
-                      onClick={() => setViewOption('year')}
-                      className={viewOption === 'year' ? 'bg-background' : ''}
-                    >
-                      Year
-                    </TabsTrigger>
-                  </TabsList>
+                  <Tabs defaultValue={viewOption} value={viewOption} onValueChange={(value) => setViewOption(value as 'week' | 'month' | 'year')}>
+                    <TabsList className="bg-muted/50">
+                      <TabsTrigger value="week">Week</TabsTrigger>
+                      <TabsTrigger value="month">Month</TabsTrigger>
+                      <TabsTrigger value="year">Year</TabsTrigger>
+                    </TabsList>
+                  </Tabs>
                 </div>
               </div>
               <Separator />
