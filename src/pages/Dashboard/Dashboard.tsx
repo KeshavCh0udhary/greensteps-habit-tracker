@@ -227,10 +227,10 @@ const Dashboard = () => {
         acc[log.date].total_points += log.eco_points;
         
         return acc;
-      }, {} as LogDataRecord);
+      }, {} as LogDataRecord);\
       
       return groupedByDate;
-    },
+    },\
     enabled: !!user
   });
 
@@ -428,7 +428,7 @@ const Dashboard = () => {
           // Add some confetti for a nice welcome effect
           setTimeout(() => {
             showConfetti();
-          }, 500);
+          }, 500);\
         }, 800);
       }
     }
@@ -680,8 +680,7 @@ const Dashboard = () => {
                   Monthly Activity
                 </CardTitle>
                 <CardDescription>
-                  Your eco-habit logging activity for {format(date, 'MMMM yyyy')}
-                </CardDescription>
+                  Your eco-habit logging activity for {format(date, 'MMMM yyyy')}</CardDescription>
               </CardHeader>
               <CardContent>
                 {monthlyLogsLoading ? (
@@ -815,3 +814,4 @@ const Dashboard = () => {
                       <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center">
                         <Leaf className="h-3 w-3 text-primary" />
                       </div>
+                      Total Points
