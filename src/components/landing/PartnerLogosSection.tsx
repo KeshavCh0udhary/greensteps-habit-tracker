@@ -1,41 +1,35 @@
 
 import { motion } from "framer-motion";
 
-// Sample partner logos data
+// Updated partner logos with valid URLs
 const partnerLogos = [
   {
     name: "EarthSave Foundation",
-    logo: "https://i.imgur.com/7aGxt1f.png",
-    grayscalelogo: "https://i.imgur.com/LYrKSRa.png"
+    logo: "https://i.imgur.com/7aGxt1f.png"
   },
   {
     name: "Green Planet Institute",
-    logo: "https://i.imgur.com/n6Xvi6I.png",
-    grayscalelogo: "https://i.imgur.com/IQsVbD8.png"
+    logo: "https://i.imgur.com/n6Xvi6I.png"
   },
   {
     name: "Ocean Alliance",
-    logo: "https://i.imgur.com/3vUQ9fg.png",
-    grayscalelogo: "https://i.imgur.com/GI9Q4Cz.png"
+    logo: "https://i.imgur.com/3vUQ9fg.png"
   },
   {
     name: "Forest Warriors",
-    logo: "https://i.imgur.com/RAaSuLr.png",
-    grayscalelogo: "https://i.imgur.com/wabQZMT.png"
+    logo: "https://i.imgur.com/RAaSuLr.png"
   },
   {
     name: "Clean Energy Fund",
-    logo: "https://i.imgur.com/FLcZJgQ.png",
-    grayscalelogo: "https://i.imgur.com/UTdeMmy.png"
+    logo: "https://i.imgur.com/FLcZJgQ.png"
   },
   {
     name: "Sustainable Future",
-    logo: "https://i.imgur.com/p2fOrns.png",
-    grayscalelogo: "https://i.imgur.com/8Cbpiif.png"
+    logo: "https://i.imgur.com/p2fOrns.png"
   }
 ];
 
-// Eco warrior testimonials data
+// Eco warrior testimonials data with valid avatar URLs
 const ecoWarriors = [
   {
     name: "Aisha K.",
