@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -37,6 +36,7 @@ interface Log {
   habit_id: string;
   date: string;
   notes: string | null;
+  eco_points: number; // Added the missing eco_points property
 }
 
 interface Profile {
@@ -885,8 +885,11 @@ const Dashboard = () => {
                     {badges.map(badge => (
                       <EcoHabitBadge
                         key={badge.id}
-                        type={badge.badge_type}
-                        earnedAt={new Date(badge.earned_at)}
+                        emoji={badge.badge_type.includes('Streak') ? '🔥' : 
+                              badge.badge_type.includes('Points') ? '🏆' : '🌱'}
+                        text={badge.badge_type}
+                        isCompleted={true}
+                        className="w-full"
                       />
                     ))}
                   </div>
