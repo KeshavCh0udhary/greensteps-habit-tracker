@@ -7,17 +7,18 @@ import { toast } from "sonner";
 export function AuthLogout() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   
   useEffect(() => {
-    // Only redirect on protected routes when not authenticated
-    if (!user && location.pathname.startsWith("/dashboard")) {
+    // Only redirect on protected routes when not authenticated and not still loading
+    // This prevents premature redirects while authentication state is being determined
+    if (!loading && !user && location.pathname.startsWith("/dashboard")) {
       toast.info("Session ended", {
         description: "Please log in to continue."
       });
-      navigate("/");
+      navigate("/login");
     }
-  }, [user, navigate, location.pathname]);
+  }, [user, navigate, location.pathname, loading]);
   
   return null;
 }

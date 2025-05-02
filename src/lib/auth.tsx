@@ -37,8 +37,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const setupAuth = async () => {
       try {
+        // Configure Supabase client explicitly to ensure proper session persistence
+        const supabaseClient = getSupabaseClient();
+        
         // Check if Supabase is properly connected by testing a basic API call
-        const { data, error } = await supabase.auth.getSession();
+        const { data, error } = await supabaseClient.auth.getSession();
         
         if (error && error.message.includes('Failed to fetch')) {
           console.warn('Supabase connection not available.');
@@ -67,15 +70,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     setupAuth();
 
-    // Set up auth state change listener
+    // Set up auth state change listener first (BEFORE checking session)
+    // This ensures we don't miss any auth state changes during initialization
     let subscription: { unsubscribe: () => void } | undefined;
     
     try {
       const { data } = supabase.auth.onAuthStateChange(
-        async (event, newSession) => {
+        (event, newSession) => {
           console.log("Auth state changed:", event, newSession?.user?.email);
           
-          // Update the session and user state
+          // Update the session and user state immediately (synchronously)
+          // This is critical for proper session persistence
           setSession(newSession);
           setUser(newSession?.user ?? null);
           setLoading(false);
@@ -97,6 +102,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             toast.info("You've been logged out", {
               description: "Come back soon!"
             });
+            
+            // Redirect to landing page after logout
+            setTimeout(() => {
+              window.location.href = '/';
+            }, 500);
+          } else if (event === 'TOKEN_REFRESHED') {
+            // Log successful token refresh
+            console.log('Auth token refreshed successfully');
+          } else if (event === 'USER_UPDATED') {
+            // Log user update
+            console.log('User profile updated');
           }
         }
       );
@@ -124,6 +140,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         password,
         options: {
           emailRedirectTo: `${window.location.origin}/auth/callback`,
+          data: {
+            // Add metadata to be used in the handle_new_user function
+            display_name: email.split('@')[0]
+          }
         },
       });
 

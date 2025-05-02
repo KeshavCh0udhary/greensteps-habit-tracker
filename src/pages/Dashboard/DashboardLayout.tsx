@@ -13,11 +13,14 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Only redirect if not loading and user is not authenticated
+    // This prevents premature redirects while authentication state is being determined
     if (!loading && !user) {
       navigate("/login");
     }
   }, [user, loading, navigate]);
 
+  // Show a loading state while authentication status is being determined
   if (loading) {
     return (
       <PageLayout>
@@ -26,6 +29,11 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         </div>
       </PageLayout>
     );
+  }
+
+  // Don't render children until we know the user is authenticated
+  if (!user) {
+    return null;
   }
 
   return <PageLayout>{children}</PageLayout>;
