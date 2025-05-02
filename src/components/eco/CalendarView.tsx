@@ -13,17 +13,9 @@ interface CalendarViewProps {
   date: Date;
   onDateChange: (date: Date) => void;
   logData: Record<string, { habits: string[], total_points: number }>;
-  isLoading?: boolean;
-  viewType?: "week" | "month" | "year"; // Added viewType prop with default value
 }
 
-const CalendarView = ({ 
-  date, 
-  onDateChange, 
-  logData, 
-  isLoading = false,
-  viewType = "month" // Default to month view if not specified
-}: CalendarViewProps) => {
+const CalendarView = ({ date, onDateChange, logData }: CalendarViewProps) => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(date);
 
   // Calculate intensity level based on points (0-5)

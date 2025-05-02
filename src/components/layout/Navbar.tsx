@@ -1,474 +1,257 @@
 
-import React, { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { useAuth } from "@/lib/auth";
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-  SheetClose,
-} from "@/components/ui/sheet";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import Logo from "@/components/layout/Logo";
-import { Menu, X, User, Settings, LogOut, Award, Leaf, Calendar, Users } from "lucide-react";
+import Logo from "./Logo";
 import ThemeToggle from "./ThemeToggle";
-import { motion, AnimatePresence } from "framer-motion";
-import { supabase } from "@/integrations/supabase/client";
-import AuthLogout from "@/components/auth/AuthLogout";
+import { Button } from "@/components/ui/button";
+import { ChevronDown } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useAuth } from "@/lib/auth";
+import AuthModal from "@/components/auth/AuthModal";
+import { motion } from "framer-motion";
+import { 
+  Avatar,
+  AvatarImage,
+  AvatarFallback 
+} from "@/components/ui/avatar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 const Navbar = () => {
-  const { user } = useAuth();
   const location = useLocation();
   const [isScrolled, setIsScrolled] = useState(false);
-  const [profileData, setProfileData] = useState<{ display_name?: string | null, avatar_url?: string | null } | null>(null);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
-  const isAuthenticated = !!user;
-  const isLandingPage = location.pathname === "/";
-
-  // Check if on dashboard or authenticated-only pages
-  const isDashboardPage = location.pathname.includes("/dashboard") || 
-                         location.pathname === "/habits" || 
-                         location.pathname === "/progress" ||
-                         location.pathname === "/community";
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { user, signOut } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 10);
+      if (window.scrollY > 10) {
+        setIsScrolled(true);
+      } else {
+        setIsScrolled(false);
+      }
     };
 
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Fetch profile data when user is authenticated
-  useEffect(() => {
-    const fetchProfileData = async () => {
-      if (!user) return;
-
-      try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('display_name, avatar_url')
-          .eq('id', user.id)
-          .single();
-
-        if (error) throw error;
-        setProfileData(data);
-      } catch (error) {
-        console.error('Error fetching profile data:', error);
-      }
-    };
-
-    fetchProfileData();
-  }, [user]);
-
-  // Get user initials for avatar fallback
-  const getUserInitials = () => {
-    if (profileData?.display_name) {
-      return profileData.display_name
-        .split(' ')
-        .map(n => n[0])
-        .join('')
-        .toUpperCase();
-    }
-    
-    if (user?.email) {
-      return user.email.substring(0, 2).toUpperCase();
-    }
-    
-    return 'U';
+  const toggleMenu = () => {
+    setIsMenuOpen(!isMenuOpen);
   };
 
-  const navVariants = {
-    hidden: { opacity: 0, y: -20 },
-    visible: { 
-      opacity: 1, 
-      y: 0,
-      transition: {
-        duration: 0.5,
-        staggerChildren: 0.1
-      }
-    }
-  };
+  const publicNavItems = [
+    { name: "Home", path: "/" },
+    { name: "About", path: "/about" },
+    { name: "Blogs", path: "/blogs" },
+    { name: "FAQs", path: "/faqs" },
+    { name: "Community", path: "/community" },
+  ];
 
-  const itemVariants = {
-    hidden: { opacity: 0, y: -10 },
-    visible: { 
-      opacity: 1, 
-      y: 0,
-      transition: { duration: 0.5 }
-    }
-  };
+  const authenticatedNavItems = [
+    { name: "Dashboard", path: "/dashboard" },
+    { name: "My Habits", path: "/habits" },
+    { name: "Community", path: "/community" },
+    { name: "Progress", path: "/progress" },
+  ];
+
+  const navItems = user ? authenticatedNavItems : publicNavItems;
 
   return (
-    <AnimatePresence>
-      <motion.header
-        key="navbar"
-        initial="hidden"
-        animate="visible"
-        variants={navVariants}
-        className={`fixed w-full top-0 z-50 transition-all duration-300 ${
-          isScrolled || isDashboardPage
-            ? "bg-background/80 backdrop-blur-lg shadow-sm"
-            : isLandingPage
-            ? "bg-transparent"
-            : "bg-background/80 backdrop-blur-lg"
-        }`}
-      >
-        <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-          <Link to={isAuthenticated ? "/dashboard" : "/"} className="flex items-center gap-2">
-            <Logo className="h-8 w-8" />
-            <motion.span
-              variants={itemVariants}
-              className="font-bold text-lg md:text-xl hidden sm:block"
+    <header
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        isScrolled
+          ? "py-2 bg-background/90 backdrop-blur-lg shadow-sm"
+          : "py-4 bg-transparent"
+      }`}
+    >
+      <div className="container mx-auto px-4 flex items-center justify-between">
+        <Link to="/" className="flex items-center">
+          <Logo withText />
+        </Link>
+
+        <div className="hidden md:flex items-center space-x-1">
+          {navItems.map((item) => (
+            <Link
+              key={item.name}
+              to={item.path}
+              className={`relative px-4 py-2 rounded-lg text-foreground transition-colors group ${
+                location.pathname === item.path
+                  ? "font-medium text-primary"
+                  : "hover:text-primary"
+              }`}
             >
-              GreenSteps
-            </motion.span>
-          </Link>
+              {item.name}
+              <motion.span 
+                className={`absolute bottom-0 left-0 w-full h-0.5 bg-primary rounded transform origin-left ${
+                  location.pathname === item.path ? "scale-x-100" : "scale-x-0"
+                }`}
+                initial={false}
+                animate={{ scaleX: location.pathname === item.path ? 1 : 0 }}
+                transition={{ duration: 0.3 }}
+              />
+              <span className="absolute bottom-0 left-0 w-full h-0.5 bg-primary rounded transform origin-left scale-x-0 transition-transform group-hover:scale-x-100" />
+            </Link>
+          ))}
+        </div>
 
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-1">
-            {isAuthenticated ? (
-              isDashboardPage ? (
-                // Dashboard navigation when authenticated and on dashboard pages
-                <motion.nav variants={itemVariants} className="flex items-center gap-1 mr-4">
-                  <Link to="/dashboard">
-                    <Button 
-                      variant={location.pathname === "/dashboard" ? "default" : "ghost"} 
-                      className="flex items-center gap-1"
-                    >
-                      <Leaf className="h-4 w-4" />
-                      <span>Dashboard</span>
-                    </Button>
-                  </Link>
-                  <Link to="/habits">
-                    <Button 
-                      variant={location.pathname === "/habits" ? "default" : "ghost"} 
-                      className="flex items-center gap-1"
-                    >
-                      <Leaf className="h-4 w-4" />
-                      <span>My Habits</span>
-                    </Button>
-                  </Link>
-                  <Link to="/progress">
-                    <Button 
-                      variant={location.pathname === "/progress" ? "default" : "ghost"} 
-                      className="flex items-center gap-1"
-                    >
-                      <Award className="h-4 w-4" />
-                      <span>Progress</span>
-                    </Button>
-                  </Link>
-                  <Link to="/community">
-                    <Button 
-                      variant={location.pathname === "/community" ? "default" : "ghost"} 
-                      className="flex items-center gap-1"
-                    >
-                      <Users className="h-4 w-4" />
-                      <span>Community</span>
-                    </Button>
-                  </Link>
-                </motion.nav>
-              ) : (
-                // Main navigation when authenticated but not on dashboard
-                <motion.nav variants={itemVariants} className="flex items-center gap-1 mr-4">
-                  <Link to="/dashboard">
-                    <Button variant="ghost">Dashboard</Button>
-                  </Link>
-                  <Link to="/about">
-                    <Button variant="ghost">About</Button>
-                  </Link>
-                  <Link to="/contact">
-                    <Button variant="ghost">Contact</Button>
-                  </Link>
-                </motion.nav>
-              )
-            ) : (
-              // Main navigation when not authenticated
-              <motion.nav variants={itemVariants} className="flex items-center gap-1 mr-4">
-                <Link to="/about">
-                  <Button variant="ghost">About</Button>
-                </Link>
-                <Link to="/faqs">
-                  <Button variant="ghost">FAQs</Button>
-                </Link>
-                <Link to="/contact">
-                  <Button variant="ghost">Contact</Button>
-                </Link>
-              </motion.nav>
-            )}
-
-            <ThemeToggle />
-
-            {isAuthenticated ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-9 w-9 rounded-full ml-2">
-                    <Avatar className="h-9 w-9">
-                      {profileData?.avatar_url ? (
-                        <AvatarImage src={profileData.avatar_url} alt="Profile" />
-                      ) : null}
-                      <AvatarFallback className="bg-primary/10 text-primary">
-                        {getUserInitials()}
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+          {user ? (
+            <div className="hidden md:flex items-center space-x-3">
+              <Link to="/dashboard">
+                <Button variant="outline">Dashboard</Button>
+              </Link>
+              
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    className="relative p-0 h-10 w-10 rounded-full overflow-hidden border"
+                  >
+                    <Avatar>
+                      <AvatarImage 
+                        src={user.user_metadata?.avatar_url} 
+                        alt={user.user_metadata?.display_name || user.email} 
+                      />
+                      <AvatarFallback className="bg-primary/10 text-primary text-sm">
+                        {user.user_metadata?.display_name?.charAt(0) || user.email?.charAt(0) || "U"}
                       </AvatarFallback>
                     </Avatar>
                   </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuLabel>
-                    {profileData?.display_name || user?.email || 'My Account'}
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <Link to="/dashboard/profile">
-                    <DropdownMenuItem className="cursor-pointer">
-                      <User className="mr-2 h-4 w-4" />
-                      <span>Profile</span>
-                    </DropdownMenuItem>
-                  </Link>
-                  <Link to="/dashboard">
-                    <DropdownMenuItem className="cursor-pointer">
-                      <Leaf className="mr-2 h-4 w-4" />
-                      <span>Dashboard</span>
-                    </DropdownMenuItem>
-                  </Link>
-                  <Link to="/progress">
-                    <DropdownMenuItem className="cursor-pointer">
-                      <Award className="mr-2 h-4 w-4" />
-                      <span>My Progress</span>
-                    </DropdownMenuItem>
-                  </Link>
-                  <Link to="/habits">
-                    <DropdownMenuItem className="cursor-pointer">
-                      <Calendar className="mr-2 h-4 w-4" />
-                      <span>My Habits</span>
-                    </DropdownMenuItem>
-                  </Link>
-                  <DropdownMenuSeparator />
-                  <AuthLogout>
-                    {({ logout }) => (
-                      <DropdownMenuItem 
-                        className="text-red-500 cursor-pointer"
-                        onClick={() => logout()}
+                </PopoverTrigger>
+                <PopoverContent className="w-56 mt-2" align="end">
+                  <div className="space-y-3">
+                    <div className="border-b pb-2">
+                      <p className="text-sm font-medium">
+                        {user.user_metadata?.display_name || user.email?.split('@')[0]}
+                      </p>
+                      <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Link 
+                        to="/profile" 
+                        className="block text-sm px-2 py-1.5 rounded-md hover:bg-accent transition-colors"
                       >
-                        <LogOut className="mr-2 h-4 w-4" />
-                        <span>Log Out</span>
-                      </DropdownMenuItem>
-                    )}
-                  </AuthLogout>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            ) : (
-              <Link to="/login">
-                <Button>Login</Button>
-              </Link>
-            )}
-          </div>
-
-          {/* Mobile Menu Trigger */}
-          <div className="flex items-center md:hidden gap-2">
-            <ThemeToggle />
-            
-            <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
-              <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-9 w-9">
-                  {isMobileMenuOpen ? (
-                    <X className="h-5 w-5" />
-                  ) : (
-                    <Menu className="h-5 w-5" />
-                  )}
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="right" className="w-[85%] sm:max-w-md">
-                <SheetHeader className="mb-4">
-                  <SheetTitle>Menu</SheetTitle>
-                  <SheetDescription>
-                    Navigate through the GreenSteps eco-platform
-                  </SheetDescription>
-                </SheetHeader>
-
-                <div className="flex flex-col gap-3 py-4">
-                  {isAuthenticated ? (
-                    <>
-                      {/* User Profile Section */}
-                      <div className="flex items-center gap-3 p-4 bg-muted/50 rounded-lg mb-2">
-                        <Avatar className="h-10 w-10">
-                          {profileData?.avatar_url ? (
-                            <AvatarImage src={profileData.avatar_url} alt="Profile" />
-                          ) : null}
-                          <AvatarFallback className="bg-primary/10">
-                            {getUserInitials()}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1">
-                          <p className="font-medium">{profileData?.display_name || 'User'}</p>
-                          <p className="text-sm text-muted-foreground truncate max-w-[180px]">
-                            {user?.email}
-                          </p>
-                        </div>
-                      </div>
-
-                      <Link to="/dashboard" onClick={() => setIsMobileMenuOpen(false)}>
-                        <SheetClose asChild>
-                          <Button 
-                            variant={location.pathname === "/dashboard" ? "default" : "outline"} 
-                            className="w-full justify-start font-normal mb-1"
-                          >
-                            <Leaf className="mr-2 h-4 w-4" />
-                            Dashboard
-                          </Button>
-                        </SheetClose>
+                        Your Profile
                       </Link>
-
-                      <Link to="/habits" onClick={() => setIsMobileMenuOpen(false)}>
-                        <SheetClose asChild>
-                          <Button 
-                            variant={location.pathname === "/habits" ? "default" : "outline"} 
-                            className="w-full justify-start font-normal mb-1"
-                          >
-                            <Calendar className="mr-2 h-4 w-4" />
-                            My Habits
-                          </Button>
-                        </SheetClose>
+                      <Link 
+                        to="/dashboard" 
+                        className="block text-sm px-2 py-1.5 rounded-md hover:bg-accent transition-colors"
+                      >
+                        Dashboard
                       </Link>
-
-                      <Link to="/progress" onClick={() => setIsMobileMenuOpen(false)}>
-                        <SheetClose asChild>
-                          <Button 
-                            variant={location.pathname === "/progress" ? "default" : "outline"} 
-                            className="w-full justify-start font-normal mb-1"
-                          >
-                            <Award className="mr-2 h-4 w-4" />
-                            My Progress
-                          </Button>
-                        </SheetClose>
-                      </Link>
-
-                      <Link to="/community" onClick={() => setIsMobileMenuOpen(false)}>
-                        <SheetClose asChild>
-                          <Button 
-                            variant={location.pathname === "/community" ? "default" : "outline"} 
-                            className="w-full justify-start font-normal mb-1"
-                          >
-                            <Users className="mr-2 h-4 w-4" />
-                            Community
-                          </Button>
-                        </SheetClose>
-                      </Link>
-
-                      <Link to="/dashboard/profile" onClick={() => setIsMobileMenuOpen(false)}>
-                        <SheetClose asChild>
-                          <Button 
-                            variant={location.pathname === "/dashboard/profile" ? "default" : "outline"} 
-                            className="w-full justify-start font-normal mt-2"
-                          >
-                            <User className="mr-2 h-4 w-4" />
-                            Profile Settings
-                          </Button>
-                        </SheetClose>
-                      </Link>
-                    </>
-                  ) : (
-                    <>
-                      <Link to="/" onClick={() => setIsMobileMenuOpen(false)}>
-                        <SheetClose asChild>
-                          <Button 
-                            variant="outline" 
-                            className="w-full justify-start font-normal mb-1"
-                          >
-                            Home
-                          </Button>
-                        </SheetClose>
-                      </Link>
-                      
-                      <Link to="/about" onClick={() => setIsMobileMenuOpen(false)}>
-                        <SheetClose asChild>
-                          <Button 
-                            variant="outline" 
-                            className="w-full justify-start font-normal mb-1"
-                          >
-                            About
-                          </Button>
-                        </SheetClose>
-                      </Link>
-                      
-                      <Link to="/faqs" onClick={() => setIsMobileMenuOpen(false)}>
-                        <SheetClose asChild>
-                          <Button 
-                            variant="outline" 
-                            className="w-full justify-start font-normal mb-1"
-                          >
-                            FAQs
-                          </Button>
-                        </SheetClose>
-                      </Link>
-                      
-                      <Link to="/contact" onClick={() => setIsMobileMenuOpen(false)}>
-                        <SheetClose asChild>
-                          <Button 
-                            variant="outline" 
-                            className="w-full justify-start font-normal mb-1"
-                          >
-                            Contact
-                          </Button>
-                        </SheetClose>
-                      </Link>
-                      
-                      <div className="flex gap-2 mt-3">
-                        <Link to="/login" className="flex-1" onClick={() => setIsMobileMenuOpen(false)}>
-                          <SheetClose asChild>
-                            <Button variant="outline" className="w-full">
-                              Login
-                            </Button>
-                          </SheetClose>
-                        </Link>
-                        <Link to="/signup" className="flex-1" onClick={() => setIsMobileMenuOpen(false)}>
-                          <SheetClose asChild>
-                            <Button className="w-full">Sign Up</Button>
-                          </SheetClose>
-                        </Link>
-                      </div>
-                    </>
-                  )}
-
-                  {isAuthenticated && (
-                    <AuthLogout>
-                      {({ logout }) => (
-                        <SheetClose asChild>
-                          <Button 
-                            variant="outline" 
-                            className="w-full justify-start font-normal mt-4 text-red-500 hover:text-red-600 hover:bg-red-50/50 dark:hover:bg-red-900/20"
-                            onClick={() => {
-                              logout();
-                              setIsMobileMenuOpen(false);
-                            }}
-                          >
-                            <LogOut className="mr-2 h-4 w-4" />
-                            Log Out
-                          </Button>
-                        </SheetClose>
-                      )}
-                    </AuthLogout>
-                  )}
-                </div>
-              </SheetContent>
-            </Sheet>
-          </div>
+                      <button 
+                        onClick={signOut} 
+                        className="w-full text-left text-sm px-2 py-1.5 rounded-md text-red-500 hover:bg-red-100 dark:hover:bg-red-900/20 transition-colors"
+                      >
+                        Sign out
+                      </button>
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
+            </div>
+          ) : (
+            <div className="hidden md:flex items-center space-x-2">
+              <AuthModal defaultTab="login">
+                <Button variant="outline" className="rounded-full px-6">Log in</Button>
+              </AuthModal>
+              <AuthModal defaultTab="signup">
+                <Button className="rounded-full px-6">Sign up</Button>
+              </AuthModal>
+            </div>
+          )}
+          <button
+            className="md:hidden p-2 rounded-lg hover:bg-accent/50"
+            onClick={toggleMenu}
+            aria-label="Toggle menu"
+          >
+            <ChevronDown
+              className={`h-5 w-5 transition-transform ${
+                isMenuOpen ? "rotate-180" : ""
+              }`}
+            />
+          </button>
         </div>
-      </motion.header>
-    </AnimatePresence>
+      </div>
+
+      {/* Mobile Menu */}
+      <div
+        className={`md:hidden transition-all duration-300 overflow-hidden ${
+          isMenuOpen
+            ? "max-h-96 border-b border-border/50 bg-background/95 backdrop-blur-lg"
+            : "max-h-0"
+        }`}
+      >
+        <div className="container mx-auto px-4 py-2 space-y-2">
+          {navItems.map((item) => (
+            <Link
+              key={item.name}
+              to={item.path}
+              className={`block px-4 py-2 rounded-lg hover:bg-accent/50 transition-all ${
+                location.pathname === item.path
+                  ? "font-medium text-primary bg-accent/50"
+                  : ""
+              }`}
+              onClick={() => setIsMenuOpen(false)}
+            >
+              {item.name}
+            </Link>
+          ))}
+
+          {user ? (
+            <div className="flex flex-col pt-2 space-y-2 border-t border-border/50">
+              <Link 
+                to="/profile" 
+                className="flex items-center px-4 py-2 rounded-lg hover:bg-accent/50"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                <Avatar className="h-6 w-6 mr-2">
+                  <AvatarImage 
+                    src={user.user_metadata?.avatar_url} 
+                    alt={user.user_metadata?.display_name || user.email} 
+                  />
+                  <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                    {user.user_metadata?.display_name?.charAt(0) || user.email?.charAt(0) || "U"}
+                  </AvatarFallback>
+                </Avatar>
+                Your Profile
+              </Link>
+              <Link to="/dashboard" onClick={() => setIsMenuOpen(false)}>
+                <Button variant="outline" className="w-full">
+                  Dashboard
+                </Button>
+              </Link>
+              <Button 
+                onClick={() => {
+                  signOut();
+                  setIsMenuOpen(false);
+                }}
+                className="w-full"
+              >
+                Log out
+              </Button>
+            </div>
+          ) : (
+            <div className="flex flex-col pt-2 space-y-2 border-t border-border/50">
+              <AuthModal defaultTab="login">
+                <Button variant="outline" className="w-full" onClick={() => setIsMenuOpen(false)}>
+                  Log in
+                </Button>
+              </AuthModal>
+              <AuthModal defaultTab="signup">
+                <Button className="w-full" onClick={() => setIsMenuOpen(false)}>
+                  Sign up
+                </Button>
+              </AuthModal>
+            </div>
+          )}
+        </div>
+      </div>
+    </header>
   );
 };
 

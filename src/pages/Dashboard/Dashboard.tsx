@@ -23,7 +23,6 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import CommunityCard from "@/components/community/CommunityCard";
 import StatsCard from "@/components/stats/StatsCard";
 import CalendarHeatmap from "@/components/calendar/CalendarHeatmap";
-import { Link } from "react-router-dom";
 
 // Types for our data
 interface Habit {
@@ -38,7 +37,6 @@ interface Log {
   habit_id: string;
   date: string;
   notes: string | null;
-  eco_points: number; // Added the missing eco_points property
 }
 
 interface Profile {
@@ -78,9 +76,8 @@ type CalendarViewType = "week" | "month" | "year";
 
 // Available emoji choices for custom habits
 const emojiChoices = [
-  "🌱", "🌿", "🌳", "🌞", "🚶‍♂️", "🔋", "♻️", "🥗", 
-  "🚿", "🌊", "📱", "💡", "🥤", "👜", "🚰", "🍽️", "🥬",
-  "🚲", "🛒", "🌻", "🧩", "🔄", "🧴", "🧹"
+  "🚲", "🌱", "🌿", "🌳", "🌞", "🚶‍♂️", "🔋", "♻️", "🥗", 
+  "🚿", "🌊", "📱", "💡", "🥤", "👜", "🚰", "🍽️", "🥬"
 ];
 
 // Sample communities for demonstration
@@ -123,14 +120,12 @@ const Dashboard = () => {
   const [selectedEmoji, setSelectedEmoji] = useState("🌱");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [calendarView, setCalendarView] = useState<CalendarViewType>("month");
-  const [joinedCommunities, setJoinedCommunities] = useState<string[]>([]);
   
   const { register, handleSubmit, reset, setValue, watch } = useForm({
     defaultValues: {
       title: "",
       emoji: "🌱",
-      eco_points: 1,
-      description: ""
+      eco_points: 1
     }
   });
 
@@ -259,7 +254,7 @@ const Dashboard = () => {
   // Calculate total active days (distinct days with at least one logged habit)
   const totalActiveDays = allUserLogs ? new Set(allUserLogs.map(log => log.date)).size : 0;
 
-  // Calculate total points earned from all logs - FIX: ensure we're not double counting
+  // Calculate total points earned from all logs
   const totalPointsEarned = allUserLogs ? allUserLogs.reduce((sum, log) => sum + (log.eco_points || 0), 0) : 0;
   
   // Combine habits with log status
@@ -422,7 +417,7 @@ const Dashboard = () => {
   };
   
   // Handle creating a new custom habit
-  const handleCreateHabit = async (data: { title: string, emoji: string, eco_points: number, description: string }) => {
+  const handleCreateHabit = async (data: { title: string, emoji: string, eco_points: number }) => {
     try {
       // Insert the new habit into the database
       const { error, data: newHabit } = await supabase
@@ -470,33 +465,6 @@ const Dashboard = () => {
       console.error("Error creating habit:", error);
       toast.error("Failed to create habit", {
         description: "Please try again later."
-      });
-    }
-  };
-  
-  // Handle joining a community
-  const handleJoinCommunity = (communityId: string) => {
-    // In a real application, this would be saved to the database
-    setJoinedCommunities([...joinedCommunities, communityId]);
-    
-    const community = sampleCommunities.find(c => c.id === communityId);
-    if (community) {
-      toast.success(`You joined ${community.name}!`, {
-        description: `Welcome to the ${community.name} community.`,
-        icon: community.icon
-      });
-    }
-  };
-  
-  // Handle leaving a community
-  const handleLeaveCommunity = (communityId: string) => {
-    // In a real application, this would remove from the database
-    setJoinedCommunities(joinedCommunities.filter(id => id !== communityId));
-    
-    const community = sampleCommunities.find(c => c.id === communityId);
-    if (community) {
-      toast.info(`You left ${community.name}`, {
-        description: `You are no longer a member of the ${community.name} community.`
       });
     }
   };
@@ -705,16 +673,6 @@ const Dashboard = () => {
                             />
                           </div>
                         </div>
-                        
-                        <div>
-                          <Label htmlFor="description">Description (Optional)</Label>
-                          <Input
-                            id="description"
-                            placeholder="Brief description of the habit"
-                            {...register("description")}
-                          />
-                        </div>
-                        
                         <div>
                           <Label htmlFor="eco_points">Eco Points (0.5-5)</Label>
                           <Input
@@ -846,12 +804,10 @@ const Dashboard = () => {
                     <div className="h-64 bg-muted rounded"></div>
                   </div>
                 ) : (
-                  <CalendarView 
+                  <CalendarHeatmap 
+                    logs={periodLogs}
                     viewType={calendarView}
-                    date={date}
-                    onDateChange={(newDate) => setDate(newDate)}
-                    logData={periodLogs || {}}
-                    isLoading={periodLogsLoading}
+                    currentDate={date}
                   />
                 )}
               </CardContent>
@@ -929,11 +885,8 @@ const Dashboard = () => {
                     {badges.map(badge => (
                       <EcoHabitBadge
                         key={badge.id}
-                        emoji={badge.badge_type.includes('Streak') ? '🔥' : 
-                              badge.badge_type.includes('Points') ? '🏆' : '🌱'}
-                        text={badge.badge_type}
-                        isCompleted={true}
-                        className="w-full"
+                        type={badge.badge_type}
+                        earnedAt={new Date(badge.earned_at)}
                       />
                     ))}
                   </div>
@@ -946,17 +899,6 @@ const Dashboard = () => {
                 )}
               </CardContent>
             </Card>
-            
-            <div className="text-center mt-4">
-              <Link to="/progress">
-                <Button
-                  className="bg-green-600 hover:bg-green-700"
-                >
-                  View Complete Progress Details
-                  <ChevronRight className="ml-1 h-4 w-4" />
-                </Button>
-              </Link>
-            </div>
           </motion.div>
         </TabsContent>
         
@@ -975,82 +917,64 @@ const Dashboard = () => {
                 </span>
                 Your Communities
               </h2>
+              <Button size="sm" variant="outline" className="flex items-center gap-1">
+                <Plus className="h-4 w-4" />
+                <span>Join New</span>
+              </Button>
             </div>
             
-            {joinedCommunities.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {sampleCommunities.filter(community => joinedCommunities.includes(community.id)).map(community => (
-                  <motion.div
-                    key={community.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5 }}
-                    whileHover={{ y: -4, transition: { duration: 0.2 } }}
-                  >
-                    <CommunityCard
-                      id={community.id}
-                      name={community.name}
-                      description={community.description}
-                      icon={community.icon}
-                      memberCount={community.member_count}
-                      isJoined={true}
-                      onLeave={handleLeaveCommunity}
-                    />
-                  </motion.div>
-                ))}
-              </div>
-            ) : (
-              <Card className="text-center py-8">
-                <CardContent>
-                  <Users className="h-12 w-12 mx-auto text-muted-foreground opacity-20 mb-3" />
-                  <p className="text-muted-foreground mb-2">You're not part of any communities yet.</p>
-                  <p className="text-sm text-muted-foreground mb-4">Join communities below to connect with like-minded eco-warriors!</p>
-                </CardContent>
-              </Card>
-            )}
-
-            <div className="mt-8">
-              <h2 className="text-xl font-semibold mb-4 flex items-center">
-                <span className="bg-primary/10 w-8 h-8 rounded-full flex items-center justify-center mr-2">
-                  <Users className="h-4 w-4 text-primary" />
-                </span>
-                Available Communities
-              </h2>
-              
-              <div className="grid grid-cols-1 gap-4">
-                {sampleCommunities.map(community => (
-                  <motion.div
-                    key={community.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5 }}
-                    whileHover={{ y: -4, transition: { duration: 0.2 } }}
-                  >
-                    <CommunityCard
-                      id={community.id}
-                      name={community.name}
-                      description={community.description}
-                      icon={community.icon}
-                      memberCount={community.member_count}
-                      isJoined={joinedCommunities.includes(community.id)}
-                      onJoin={handleJoinCommunity}
-                      onLeave={handleLeaveCommunity}
-                    />
-                  </motion.div>
-                ))}
-              </div>
-            </div>
-            
-            <div className="text-center mt-4">
-              <Link to="/community">
-                <Button
-                  className="bg-green-600 hover:bg-green-700"
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {sampleCommunities.map(community => (
+                <motion.div
+                  key={community.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5 }}
+                  whileHover={{ y: -4, transition: { duration: 0.2 } }}
                 >
-                  View All Communities
-                  <ChevronRight className="ml-1 h-4 w-4" />
-                </Button>
-              </Link>
+                  <CommunityCard
+                    id={community.id}
+                    name={community.name}
+                    description={community.description}
+                    icon={community.icon}
+                    memberCount={community.member_count}
+                  />
+                </motion.div>
+              ))}
             </div>
+            
+            <Card className="border shadow-md bg-card/80 backdrop-blur-sm">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Award className="h-5 w-5 text-primary" />
+                  Community Leaderboard
+                </CardTitle>
+                <CardDescription>
+                  See how your communities are performing
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {sampleCommunities.map((community, index) => (
+                    <div key={community.id} className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-accent/5 transition-colors">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-lg">
+                          {community.icon}
+                        </div>
+                        <div>
+                          <p className="font-medium">{community.name}</p>
+                          <p className="text-xs text-muted-foreground">{community.member_count} members</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-semibold">{(5000 - (index * 1000)).toLocaleString()}</span>
+                        <span className="text-xs text-muted-foreground">points</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
           </motion.div>
         </TabsContent>
       </Tabs>

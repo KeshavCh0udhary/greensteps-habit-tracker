@@ -4,14 +4,10 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 
-interface AuthLogoutProps {
-  children?: (props: { logout: () => void }) => React.ReactNode;
-}
-
-export function AuthLogout({ children }: AuthLogoutProps) {
+export function AuthLogout() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, loading, signOut } = useAuth();
+  const { user, loading } = useAuth();
   
   useEffect(() => {
     // Only redirect on protected routes when not authenticated and not still loading
@@ -24,18 +20,7 @@ export function AuthLogout({ children }: AuthLogoutProps) {
     }
   }, [user, navigate, location.pathname, loading]);
   
-  const logout = async () => {
-    try {
-      await signOut();
-      toast.success("Logged out successfully");
-      navigate("/");
-    } catch (error) {
-      console.error("Error logging out:", error);
-      toast.error("Failed to log out");
-    }
-  };
-
-  return children ? children({ logout }) : null;
+  return null;
 }
 
 export default AuthLogout;

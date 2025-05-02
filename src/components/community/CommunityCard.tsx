@@ -1,69 +1,47 @@
 
 import React from 'react';
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Users } from "lucide-react";
+import { ChevronRight, Users } from 'lucide-react';
 
-export interface CommunityCardProps {
+interface CommunityCardProps {
   id: string;
   name: string;
   description: string;
   icon: string;
   memberCount: number;
-  isJoined?: boolean;
-  onJoin?: (id: string) => void;
-  onLeave?: (id: string) => void;
-  className?: string;
 }
 
-const CommunityCard = ({
-  id,
-  name,
-  description,
-  icon,
-  memberCount,
-  isJoined = false,
-  onJoin,
-  onLeave,
-  className = "",
-}: CommunityCardProps) => {
+const CommunityCard: React.FC<CommunityCardProps> = ({ 
+  id, 
+  name, 
+  description, 
+  icon, 
+  memberCount 
+}) => {
   return (
-    <Card className={`overflow-hidden border hover:shadow-md transition-all ${className}`}>
-      <CardContent className="p-4">
-        <div className="flex flex-col md:flex-row gap-3 md:items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="h-12 w-12 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-2xl">
-              {icon}
-            </div>
-            <div>
-              <h3 className="font-semibold text-lg">{name}</h3>
-              <p className="text-sm text-muted-foreground">{description}</p>
+    <Card className="border shadow-md bg-card/80 backdrop-blur-sm hover:shadow-lg transition-shadow overflow-hidden">
+      <CardContent className="p-0">
+        <div className="flex flex-col">
+          <div className="p-4 pb-3 border-b border-border/50">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-xl flex-shrink-0">
+                {icon}
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold">{name}</h3>
+                <p className="text-sm text-muted-foreground line-clamp-2">{description}</p>
+              </div>
             </div>
           </div>
-          <div className="flex items-center gap-2 mt-3 md:mt-0">
-            <Badge variant="secondary" className="flex items-center gap-1 h-7 px-2">
-              <Users className="h-3 w-3" />
-              <span>{memberCount}</span>
-            </Badge>
-            {isJoined ? (
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="ml-auto"
-                onClick={() => onLeave && onLeave(id)}
-              >
-                Leave
-              </Button>
-            ) : (
-              <Button 
-                size="sm" 
-                className="ml-auto bg-green-600 hover:bg-green-700"
-                onClick={() => onJoin && onJoin(id)}
-              >
-                Join
-              </Button>
-            )}
+          <div className="p-3 px-4 flex items-center justify-between">
+            <div className="flex items-center gap-1.5 text-sm">
+              <Users className="h-3.5 w-3.5" />
+              <span>{memberCount} members</span>
+            </div>
+            <Button variant="ghost" size="sm" className="h-8 px-2">
+              Details <ChevronRight className="h-3.5 w-3.5 ml-0.5" />
+            </Button>
           </div>
         </div>
       </CardContent>
