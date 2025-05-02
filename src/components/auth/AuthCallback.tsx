@@ -12,20 +12,27 @@ const AuthCallback = () => {
   useEffect(() => {
     const handleAuthCallback = async () => {
       try {
+        console.log("Auth callback: processing authentication");
+        
         // Get session from URL hash
         const { data, error } = await supabase.auth.getSession();
 
         if (error) {
+          console.error("Error getting session:", error);
           throw error;
         }
 
         if (data?.session) {
           // Successfully authenticated
+          console.log("Auth callback: session found, redirecting to dashboard");
           toast.success("Login successful!", { 
             description: "Welcome back!"
           });
+          
+          // Use replace: true to prevent going back to the callback page
           navigate("/dashboard", { replace: true });
         } else {
+          console.error("No session found in auth callback");
           throw new Error("No session found");
         }
       } catch (e) {

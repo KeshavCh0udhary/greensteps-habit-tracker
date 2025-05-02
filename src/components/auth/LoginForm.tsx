@@ -47,6 +47,7 @@ const LoginForm = () => {
         toast.error("Login failed", {
           description: error.message || "Please check your credentials and try again.",
         });
+        setIsLoading(false);
         return;
       }
 
@@ -62,7 +63,6 @@ const LoginForm = () => {
       toast.error("Something went wrong", {
         description: "Please try again later.",
       });
-    } finally {
       setIsLoading(false);
     }
   };

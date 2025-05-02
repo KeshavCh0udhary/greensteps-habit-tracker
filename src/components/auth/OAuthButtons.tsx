@@ -18,10 +18,14 @@ const OAuthButtons = ({ redirectTo = "/dashboard" }: OAuthButtonsProps) => {
     try {
       setIsLoading(provider);
       
+      // Ensure we have the full URL for the callback
+      const callbackUrl = `${window.location.origin}/auth/callback`;
+      console.log(`OAuth login with ${provider}, callback URL: ${callbackUrl}`);
+      
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: callbackUrl,
           scopes: provider === 'github' ? 'user:email' : undefined,
         },
       });
@@ -29,6 +33,8 @@ const OAuthButtons = ({ redirectTo = "/dashboard" }: OAuthButtonsProps) => {
       if (error) {
         throw error;
       }
+      
+      // Note: No need to navigate here - the OAuth flow will redirect
     } catch (error) {
       console.error(`${provider} login error:`, error);
       toast.error(`${provider} login failed`, {

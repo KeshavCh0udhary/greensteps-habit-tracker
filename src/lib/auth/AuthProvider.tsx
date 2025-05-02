@@ -1,7 +1,7 @@
 
 import { useState, useEffect, ReactNode } from "react";
 import { Session, User } from "@supabase/supabase-js";
-import { getSupabaseClient } from "../supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import AuthContext from "./AuthContext";
 import { signUpUser, signInUser, signOutUser, resetUserPassword, checkSupabaseConnection } from "./authUtils";
@@ -15,7 +15,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [isSupabaseConnected, setIsSupabaseConnected] = useState(false);
-  const supabase = getSupabaseClient();
   
   useEffect(() => {
     const setupAuth = async () => {
@@ -25,28 +24,29 @@ export function AuthProvider({ children }: AuthProviderProps) {
         setIsSupabaseConnected(isConnected);
         
         if (!isConnected) {
+          console.error("Supabase connection not available");
           setLoading(false);
           return;
         }
       } catch (error) {
         console.error("Error checking Supabase connection:", error);
         setIsSupabaseConnected(false);
-      } finally {
         setLoading(false);
       }
     };
 
-    // Set up auth state change listener first (BEFORE checking session)
+    setupAuth();
+    
+    // Set up auth state change listener FIRST (before checking the session)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, newSession) => {
         console.log("Auth state changed:", event, newSession?.user?.email);
         
-        // Update the session and user state immediately (synchronously)
+        // Update the session and user state
         setSession(newSession);
         setUser(newSession?.user ?? null);
         setLoading(false);
         
-        // Handle auth state changes for redirects
         if (event === 'SIGNED_IN') {
           // Show welcome message
           toast.success("Welcome back!", {
@@ -64,13 +64,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
     );
 
-    // After setting up the listener, check for an existing session
+    // THEN check for an existing session
     const getInitialSession = async () => {
       try {
         const { data } = await supabase.auth.getSession();
-        
-        setSession(data.session);
-        setUser(data.session?.user ?? null);
         
         // Log the session state for debugging
         console.log("Initial session state:", {
@@ -78,6 +75,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
           user: data.session?.user ?? null,
           isActive: !!data.session,
         });
+        
+        if (data.session) {
+          setSession(data.session);
+          setUser(data.session.user);
+        }
       } catch (error) {
         console.error("Error loading auth session:", error);
       } finally {
@@ -85,7 +87,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
     };
 
-    setupAuth();
     getInitialSession();
 
     return () => {

@@ -1,13 +1,11 @@
 
-import { getSupabaseClient } from "../supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 export const signUpUser = async (email: string, password: string) => {
-  const supabase = getSupabaseClient();
-  
   try {
     console.log("Attempting to sign up with email:", email);
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -22,9 +20,15 @@ export const signUpUser = async (email: string, password: string) => {
       throw error;
     }
 
-    toast.success("Account created!", {
-      description: "Please check your email to verify your account."
-    });
+    // Check if session exists (auto sign-in)
+    if (data?.session) {
+      console.log("Sign up successful with immediate session");
+    } else {
+      console.log("Sign up successful, email confirmation required");
+      toast.success("Account created!", {
+        description: "Please check your email to verify your account."
+      });
+    }
     
     return { error: null, success: true };
   } catch (error) {
@@ -34,8 +38,6 @@ export const signUpUser = async (email: string, password: string) => {
 };
 
 export const signInUser = async (email: string, password: string) => {
-  const supabase = getSupabaseClient();
-  
   try {
     console.log("Attempting to sign in with email:", email);
     const { data, error } = await supabase.auth.signInWithPassword({
@@ -60,8 +62,6 @@ export const signInUser = async (email: string, password: string) => {
 };
 
 export const signOutUser = async () => {
-  const supabase = getSupabaseClient();
-  
   console.log("Attempting to sign out");
   try {
     const { error } = await supabase.auth.signOut();
@@ -82,8 +82,6 @@ export const signOutUser = async () => {
 };
 
 export const resetUserPassword = async (email: string) => {
-  const supabase = getSupabaseClient();
-  
   try {
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/auth/reset-password`,
@@ -102,8 +100,8 @@ export const resetUserPassword = async (email: string) => {
 
 export const checkSupabaseConnection = async () => {
   try {
-    const supabaseClient = getSupabaseClient();
-    const { data, error } = await supabaseClient.auth.getSession();
+    // Simple check to see if we can connect to Supabase
+    const { data, error } = await supabase.auth.getSession();
     
     if (error && error.message && error.message.includes('Failed to fetch')) {
       console.warn('Supabase connection not available.');
