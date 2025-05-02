@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -899,7 +898,7 @@ const Dashboard = () => {
                                     <span className="text-lg">{habit.emoji}</span>
                                     <span className="font-medium">{habit.title}</span>
                                   </div>
-                                  <span className="text-sm font-medium bg-accent/70 rounded-full px-2 py-0.5">{count} logs</span>
+                                  <span className="text-sm font-medium bg-accent/50 rounded-full px-2 py-0.5">{count} logs</span>
                                 </div>
                                 <div className="w-full bg-muted rounded-full h-2.5">
                                   <motion.div 
