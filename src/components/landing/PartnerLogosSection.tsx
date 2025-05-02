@@ -1,58 +1,58 @@
 
 import { motion } from "framer-motion";
 
-// Fixed partner logos with valid URLs
+// Updated partner logos with valid URLs
 const partnerLogos = [
   {
     name: "EarthSave Foundation",
-    logo: "https://i.imgur.com/7aGxt1f.png"
+    logo: "https://images.unsplash.com/photo-1518495973542-4542c06a5843?auto=format&fit=crop&w=200&h=200&q=80"
   },
   {
     name: "Green Planet Institute",
-    logo: "https://i.imgur.com/n6Xvi6I.png"
+    logo: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=200&h=200&q=80"
   },
   {
     name: "Ocean Alliance",
-    logo: "https://i.imgur.com/3vUQ9fg.png"
+    logo: "https://images.unsplash.com/photo-1501854140801-50d01698950b?auto=format&fit=crop&w=200&h=200&q=80"
   },
   {
     name: "Forest Warriors",
-    logo: "https://i.imgur.com/RAaSuLr.png"
+    logo: "https://images.unsplash.com/photo-1615729947596-a598e5de0ab3?auto=format&fit=crop&w=200&h=200&q=80"
   },
   {
     name: "Clean Energy Fund",
-    logo: "https://i.imgur.com/FLcZJgQ.png"
+    logo: "https://images.unsplash.com/photo-1523712999610-f77fbcfc3843?auto=format&fit=crop&w=200&h=200&q=80"
   },
   {
     name: "Sustainable Future",
-    logo: "https://i.imgur.com/p2fOrns.png"
+    logo: "/lovable-uploads/d52125a8-d730-4b3f-bc1e-e496deec9819.png"
   }
 ];
 
-// Fixed eco warrior testimonials data with valid avatar URLs
+// Updated eco warrior testimonials data with valid avatar URLs
 const ecoWarriors = [
   {
     name: "Aisha K.",
     role: "Climate Activist",
-    avatar: "https://i.imgur.com/JFHjdNJ.jpg",
+    avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=120&q=80",
     testimonial: "GreenSteps helped me reduce my carbon footprint by 40% in just 3 months!"
   },
   {
     name: "Miguel R.",
     role: "Environmental Scientist",
-    avatar: "https://i.imgur.com/w5N9VKe.jpg",
+    avatar: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=120&q=80",
     testimonial: "I use GreenSteps to track my lab's sustainability efforts. Game changer!"
   },
   {
     name: "Sarah T.",
     role: "Urban Gardener",
-    avatar: "https://i.imgur.com/xNLs63h.jpg",
+    avatar: "https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=120&q=80",
     testimonial: "The streak calendar keeps me motivated to make eco-friendly choices daily."
   },
   {
     name: "Jamal W.",
     role: "Sustainable Business Owner",
-    avatar: "https://i.imgur.com/QcRKBwC.jpg",
+    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=120&q=80",
     testimonial: "My team competes for top eco-scores. We've cut office waste by 65%!"
   }
 ];
