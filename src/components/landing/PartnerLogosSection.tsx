@@ -1,31 +1,31 @@
 
 import { motion } from "framer-motion";
 
-// Updated partner logos with valid URLs
+// Updated partner logos with more relevant eco-organization images
 const partnerLogos = [
   {
-    name: "EarthSave Foundation",
-    logo: "https://images.unsplash.com/photo-1518495973542-4542c06a5843?auto=format&fit=crop&w=200&h=200&q=80"
+    name: "Green Earth Alliance",
+    logo: "https://images.unsplash.com/photo-1551651653-c5186a1fbba2?auto=format&fit=crop&w=200&h=200&q=80"
   },
   {
-    name: "Green Planet Institute",
-    logo: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=200&h=200&q=80"
+    name: "Forest Protection Institute",
+    logo: "https://images.unsplash.com/photo-1513836279014-a89f7a76ae86?auto=format&fit=crop&w=200&h=200&q=80"
   },
   {
-    name: "Ocean Alliance",
-    logo: "https://images.unsplash.com/photo-1501854140801-50d01698950b?auto=format&fit=crop&w=200&h=200&q=80"
+    name: "Ocean Conservation Society",
+    logo: "https://images.unsplash.com/photo-1497290756760-23ac55edf36f?auto=format&fit=crop&w=200&h=200&q=80"
   },
   {
-    name: "Forest Warriors",
-    logo: "https://images.unsplash.com/photo-1615729947596-a598e5de0ab3?auto=format&fit=crop&w=200&h=200&q=80"
+    name: "Sustainable Energy Foundation",
+    logo: "https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?auto=format&fit=crop&w=200&h=200&q=80"
   },
   {
-    name: "Clean Energy Fund",
-    logo: "https://images.unsplash.com/photo-1523712999610-f77fbcfc3843?auto=format&fit=crop&w=200&h=200&q=80"
+    name: "Plant-Based Initiative",
+    logo: "https://images.unsplash.com/photo-1526336024174-e58f5cdd8e13?auto=format&fit=crop&w=200&h=200&q=80"
   },
   {
-    name: "Sustainable Future",
-    logo: "/lovable-uploads/d52125a8-d730-4b3f-bc1e-e496deec9819.png"
+    name: "Eco Education Network",
+    logo: "https://images.unsplash.com/photo-1507123696142-89cf57448c82?auto=format&fit=crop&w=200&h=200&q=80"
   }
 ];
 
@@ -95,7 +95,7 @@ const PartnerLogosSection = () => {
                 <img 
                   src={partner.logo} 
                   alt={partner.name}
-                  className="max-h-16 max-w-full"
+                  className="max-h-16 max-w-full rounded-lg object-cover"
                 />
               </motion.div>
             ))}
@@ -118,7 +118,7 @@ const PartnerLogosSection = () => {
                   <img 
                     src={partner.logo} 
                     alt={partner.name}
-                    className="max-h-12 max-w-full mx-auto"
+                    className="max-h-12 max-w-full mx-auto rounded-lg object-cover"
                   />
                 </div>
               ))}
