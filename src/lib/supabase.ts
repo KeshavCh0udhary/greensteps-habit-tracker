@@ -11,22 +11,27 @@ const initSupabase = () => {
 
   if (!supabaseUrl || !supabaseAnonKey) {
     console.warn('Supabase credentials are missing. Please connect your project to Supabase for full functionality.');
-    // Create a mock client with empty URL and key that will fail gracefully
-    // This prevents the app from crashing while still allowing rendering
     return createClient<Database>('https://placeholder-url.supabase.co', 'placeholder-key');
   }
 
-  supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
-    auth: {
-      storage: localStorage,
-      persistSession: true,
-      autoRefreshToken: true,
-      detectSessionInUrl: true,
-      flowType: 'pkce'
-    }
-  });
-  
-  return supabase;
+  try {
+    supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        storage: localStorage,
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+        flowType: 'pkce'
+      }
+    });
+    
+    console.log("Supabase client initialized with URL:", supabaseUrl);
+    return supabase;
+  } catch (error) {
+    console.error("Error initializing Supabase client:", error);
+    // Create a fallback client that will fail gracefully
+    return createClient<Database>('https://placeholder-url.supabase.co', 'placeholder-key');
+  }
 };
 
 // Export initialized client or init if not already done

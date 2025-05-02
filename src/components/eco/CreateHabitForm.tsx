@@ -13,6 +13,7 @@ import { motion } from "framer-motion";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { HabitFormData } from "@/types/interfaces";
 
 // Available emoji choices for custom habits
 const emojiChoices = [
@@ -28,8 +29,6 @@ const habitSchema = z.object({
     .min(0.5, "Minimum value is 0.5")
     .max(5, "Maximum value is 5")
 });
-
-type HabitFormData = z.infer<typeof habitSchema>;
 
 interface CreateHabitFormProps {
   onSuccess: () => void;
@@ -59,6 +58,8 @@ const CreateHabitForm = ({ onSuccess, onCancel }: CreateHabitFormProps) => {
     try {
       setIsSubmitting(true);
       
+      console.log("Creating habit with data:", data);
+      
       // Insert the new habit into the database
       const { error, data: newHabit } = await supabase
         .from('eco_habits')
@@ -69,7 +70,12 @@ const CreateHabitForm = ({ onSuccess, onCancel }: CreateHabitFormProps) => {
         }])
         .select();
       
-      if (error) throw error;
+      if (error) {
+        console.error("Supabase error:", error);
+        throw error;
+      }
+      
+      console.log("Habit created successfully:", newHabit);
       
       setIsSubmitting(false);
       

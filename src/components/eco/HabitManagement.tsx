@@ -49,7 +49,12 @@ const HabitManagement = ({ date, formattedDate, onLogHabit }: HabitManagementPro
         .select('*')
         .order('title', { ascending: true });
         
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching habits:", error);
+        throw error;
+      }
+      
+      console.log("Fetched habits:", data);
       return data;
     }
   });
@@ -63,7 +68,12 @@ const HabitManagement = ({ date, formattedDate, onLogHabit }: HabitManagementPro
         .select('*')
         .eq('date', formattedDate);
         
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching logs:", error);
+        throw error;
+      }
+      
+      console.log("Fetched logs for date:", formattedDate, data);
       return data;
     }
   });
@@ -82,6 +92,7 @@ const HabitManagement = ({ date, formattedDate, onLogHabit }: HabitManagementPro
   // Handle habit creation success - close dialog and refresh habits
   const handleHabitCreationSuccess = async () => {
     setShowAddHabitDialog(false);
+    console.log("Habit creation successful, refreshing habits...");
     await refetchHabits();
   };
 

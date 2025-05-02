@@ -1,5 +1,4 @@
 
-
 // LogData types for calendar visualization
 export type LogDataRecord = Record<string, { habits: string[], total_points: number }>;
 
@@ -30,4 +29,3 @@ export interface HabitFormData {
   emoji: string;
   eco_points: number;
 }
-
