@@ -53,8 +53,9 @@ const Navbar = () => {
   const authenticatedNavItems = [
     { name: "Dashboard", path: "/dashboard" },
     { name: "My Habits", path: "/habits" },
-    { name: "Community", path: "/community" },
     { name: "Progress", path: "/progress" },
+    { name: "Community", path: "/community" },
+    { name: "Leaderboard", path: "/leaderboard" },
   ];
 
   const navItems = user ? authenticatedNavItems : publicNavItems;

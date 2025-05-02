@@ -31,6 +31,7 @@ import Careers from "./pages/Careers";
 import UserProfile from "./pages/UserProfile";
 import Habits from "./pages/Habits";
 import Progress from "./pages/Progress";
+import Leaderboard from "./pages/Leaderboard";
 import { toast } from "sonner";
 
 const queryClient = new QueryClient();
@@ -133,9 +134,10 @@ const App = () => {
                 } 
               />
 
-              {/* New Routes for Habits and Progress */}
+              {/* New Routes for Habits, Progress, and Leaderboard */}
               <Route path="/habits" element={<Habits />} />
               <Route path="/progress" element={<Progress />} />
+              <Route path="/leaderboard" element={<Leaderboard />} />
               
               {/* 404 Page */}
               <Route path="*" element={<NotFound />} />
