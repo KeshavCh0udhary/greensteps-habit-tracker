@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
@@ -23,7 +22,7 @@ import {
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import Logo from "@/components/layout/Logo";
 import { Menu, X, User, Settings, LogOut, Award, Leaf, Calendar, Users } from "lucide-react";
-import { ThemeToggle } from "./ThemeToggle";
+import ThemeToggle from "./ThemeToggle";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import AuthLogout from "@/components/auth/AuthLogout";
@@ -258,10 +257,10 @@ const Navbar = () => {
                   </Link>
                   <DropdownMenuSeparator />
                   <AuthLogout>
-                    {({ logout }) => (
+                    {(logoutProps) => (
                       <DropdownMenuItem 
                         className="text-red-500 cursor-pointer"
-                        onClick={() => logout()}
+                        onClick={() => logoutProps.logout()}
                       >
                         <LogOut className="mr-2 h-4 w-4" />
                         <span>Log Out</span>
@@ -445,13 +444,13 @@ const Navbar = () => {
 
                   {isAuthenticated && (
                     <AuthLogout>
-                      {({ logout }) => (
+                      {(logoutProps) => (
                         <SheetClose asChild>
                           <Button 
                             variant="outline" 
                             className="w-full justify-start font-normal mt-4 text-red-500 hover:text-red-600 hover:bg-red-50/50 dark:hover:bg-red-900/20"
                             onClick={() => {
-                              logout();
+                              logoutProps.logout();
                               setIsMobileMenuOpen(false);
                             }}
                           >

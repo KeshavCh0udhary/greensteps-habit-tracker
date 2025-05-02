@@ -1,6 +1,6 @@
 
 import React, { useEffect } from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Outlet } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "@/lib/auth";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -52,7 +52,7 @@ function App() {
               <Route path="/blogs" element={<Blogs />} />
               <Route path="/auth/callback" element={<AuthCallback />} />
               
-              <Route path="/dashboard" element={<DashboardLayout />}>
+              <Route path="/dashboard" element={<DashboardLayout><Outlet /></DashboardLayout>}>
                 <Route index element={<Dashboard />} />
                 <Route path="profile" element={<UserProfile />} />
               </Route>
