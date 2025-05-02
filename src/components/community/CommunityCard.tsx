@@ -10,6 +10,8 @@ interface CommunityCardProps {
   description: string;
   icon: string;
   memberCount: number;
+  onJoin?: () => void;
+  isJoined?: boolean;
 }
 
 const CommunityCard: React.FC<CommunityCardProps> = ({ 
@@ -17,7 +19,9 @@ const CommunityCard: React.FC<CommunityCardProps> = ({
   name, 
   description, 
   icon, 
-  memberCount 
+  memberCount,
+  onJoin,
+  isJoined = false
 }) => {
   return (
     <Card className="border shadow-md bg-card/80 backdrop-blur-sm hover:shadow-lg transition-shadow overflow-hidden">
@@ -39,9 +43,26 @@ const CommunityCard: React.FC<CommunityCardProps> = ({
               <Users className="h-3.5 w-3.5" />
               <span>{memberCount} members</span>
             </div>
-            <Button variant="ghost" size="sm" className="h-8 px-2">
-              Details <ChevronRight className="h-3.5 w-3.5 ml-0.5" />
-            </Button>
+            <div className="flex items-center gap-2">
+              {!isJoined && onJoin && (
+                <Button 
+                  size="sm" 
+                  variant="default" 
+                  className="h-8 px-3 bg-green-600 hover:bg-green-700"
+                  onClick={onJoin}
+                >
+                  Join
+                </Button>
+              )}
+              {isJoined && (
+                <span className="text-xs bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 px-2 py-0.5 rounded-full font-medium">
+                  Joined
+                </span>
+              )}
+              <Button variant="ghost" size="sm" className="h-8 px-2">
+                Details <ChevronRight className="h-3.5 w-3.5 ml-0.5" />
+              </Button>
+            </div>
           </div>
         </div>
       </CardContent>

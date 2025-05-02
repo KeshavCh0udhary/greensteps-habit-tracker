@@ -1,33 +1,32 @@
 import { useEffect, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { useQuery } from "@tanstack/react-query";
+import { format, parseISO, isToday } from "date-fns";
+import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import EcoHabitCard from "@/components/eco/EcoHabitCard";
 import EcoHabitBadge from "@/components/eco/EcoHabitBadge";
-import { format, subDays, differenceInDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear } from "date-fns";
-import { Check, ChevronRight, Plus, Award, BarChart, Calendar, Leaf, Users, CalendarDays } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { useForm } from "react-hook-form";
-import { showConfetti, showStreakConfetti } from "@/lib/confetti";
-import CalendarView from "@/components/eco/CalendarView";
-import { motion, AnimatePresence } from "framer-motion";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import CommunityCard from "@/components/community/CommunityCard";
-import StatsCard from "@/components/stats/StatsCard";
-import CalendarHeatmap from "@/components/calendar/CalendarHeatmap";
+
+// Import the lucide-react components
+import {
+  Calendar,
+  CircleCheck,
+  CirclePlus,
+  Award,
+  Users,
+  BarChart,
+  CalendarRange,
+} from "lucide-react";
 
 // Types for our data
 interface Habit {
   id: string;
-  emoji: string;
   title: string;
+  emoji: string;
   eco_points: number;
 }
 
@@ -44,28 +43,14 @@ interface Profile {
   total_points: number;
   current_streak: number;
   longest_streak: number;
-  display_name?: string | null; 
-  avatar_url?: string | null;   
+  display_name?: string | null;
+  avatar_url?: string | null;
 }
 
 interface Badge {
   id: string;
   badge_type: string;
   earned_at: string;
-}
-
-interface HabitWithLogStatus extends Habit {
-  isLogged: boolean;
-  logId?: string;
-  logNotes?: string | null;
-}
-
-interface Community {
-  id: string;
-  name: string;
-  description: string;
-  icon: string;
-  member_count: number;
 }
 
 // Define log data type for calendar
