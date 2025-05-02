@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -5,11 +6,39 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
-import { format, parseISO, isToday } from "date-fns";
+import { format, parseISO, isToday, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear } from "date-fns";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
 import EcoHabitCard from "@/components/eco/EcoHabitCard";
 import EcoHabitBadge from "@/components/eco/EcoHabitBadge";
+import { showConfetti, showStreakConfetti } from "@/lib/confetti";
+import { toast } from "sonner";
+import CommunityCard from "@/components/community/CommunityCard";
+import { HabitWithLogStatus, Community, LogDataRecord } from "@/types/interfaces";
+import StatsCard from "@/components/stats/StatsCard";
+import CalendarHeatmap from "@/components/calendar/CalendarHeatmap";
+
+// Import the UI components
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger
+} from "@/components/ui/dialog";
+
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger
+} from "@/components/ui/popover";
+
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 // Import the lucide-react components
 import {
@@ -20,6 +49,9 @@ import {
   Users,
   BarChart,
   CalendarRange,
+  Plus,
+  CalendarDays,
+  Leaf
 } from "lucide-react";
 
 // Types for our data
@@ -52,9 +84,6 @@ interface Badge {
   badge_type: string;
   earned_at: string;
 }
-
-// Define log data type for calendar
-type LogDataRecord = Record<string, { habits: string[], total_points: number }>;
 
 // Calendar view types
 type CalendarViewType = "week" | "month" | "year";
