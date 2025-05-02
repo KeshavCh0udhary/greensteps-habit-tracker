@@ -239,136 +239,136 @@ const Community = () => {
                   )}
                 </TabsTrigger>
               </TabsList>
+            
+              {/* Communities Grid */}
+              <TabsContent value="discover" className="mt-0 space-y-4">
+                <div>
+                  <h2 className="text-lg font-medium">Discover Communities</h2>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Find and join eco-communities that align with your interests
+                  </p>
+                </div>
+                
+                {communitiesLoading ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {[1, 2, 3, 4, 5, 6].map(i => (
+                      <Card key={i} className="border shadow-md">
+                        <div className="p-4 animate-pulse">
+                          <div className="flex gap-3">
+                            <div className="w-10 h-10 rounded-full bg-muted"></div>
+                            <div className="flex-1">
+                              <div className="h-5 bg-muted rounded w-3/4 mb-2"></div>
+                              <div className="h-4 bg-muted rounded w-full"></div>
+                              <div className="h-4 bg-muted rounded w-1/2 mt-1"></div>
+                            </div>
+                          </div>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                ) : (
+                  <>
+                    {filteredCommunities.length > 0 ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {filteredCommunities.map(community => (
+                          <motion.div
+                            key={community.id}
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ duration: 0.3 }}
+                          >
+                            <CommunityCard 
+                              id={community.id}
+                              name={community.name}
+                              description={community.description}
+                              icon={community.icon}
+                              memberCount={community.memberCount}
+                              onJoin={() => handleJoinCommunity(community.id)}
+                              isJoined={hasJoinedCommunity(community.id)}
+                            />
+                          </motion.div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-16">
+                        <UsersRound className="h-12 w-12 mx-auto text-muted-foreground opacity-20" />
+                        <h3 className="mt-4 text-lg font-medium">No communities found</h3>
+                        <p className="text-muted-foreground">
+                          Try adjusting your search or check back later
+                        </p>
+                      </div>
+                    )}
+                  </>
+                )}
+              </TabsContent>
+              
+              <TabsContent value="joined" className="mt-0 space-y-4">
+                <div>
+                  <h2 className="text-lg font-medium">Your Communities</h2>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Communities you've joined and participate in
+                  </p>
+                </div>
+                
+                {userCommunitiesLoading ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {[1, 2, 3].map(i => (
+                      <Card key={i} className="border shadow-md">
+                        <div className="p-4 animate-pulse">
+                          <div className="flex gap-3">
+                            <div className="w-10 h-10 rounded-full bg-muted"></div>
+                            <div className="flex-1">
+                              <div className="h-5 bg-muted rounded w-3/4 mb-2"></div>
+                              <div className="h-4 bg-muted rounded w-full"></div>
+                              <div className="h-4 bg-muted rounded w-1/2 mt-1"></div>
+                            </div>
+                          </div>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                ) : (
+                  <>
+                    {userCommunities && userCommunities.length > 0 ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {userCommunities.map(community => (
+                          <motion.div
+                            key={community.id}
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ duration: 0.3 }}
+                          >
+                            <CommunityCard 
+                              id={community.id}
+                              name={community.name}
+                              description={community.description}
+                              icon={community.icon}
+                              memberCount={community.memberCount}
+                              isJoined={true}
+                            />
+                          </motion.div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-16 px-4">
+                        <Users className="h-12 w-12 mx-auto text-muted-foreground opacity-20" />
+                        <h3 className="mt-4 text-lg font-medium">You haven't joined any communities yet</h3>
+                        <p className="text-muted-foreground">
+                          Discover and join communities to connect with other eco-minded people
+                        </p>
+                        <Button 
+                          onClick={() => setActiveTab('discover')}
+                          className="mt-6 bg-green-600 hover:bg-green-700"
+                        >
+                          Discover Communities
+                        </Button>
+                      </div>
+                    )}
+                  </>
+                )}
+              </TabsContent>
             </Tabs>
           </div>
-          
-          {/* Communities Grid */}
-          <TabsContent value="discover" className="mt-0 space-y-4">
-            <div>
-              <h2 className="text-lg font-medium">Discover Communities</h2>
-              <p className="text-sm text-muted-foreground mb-4">
-                Find and join eco-communities that align with your interests
-              </p>
-            </div>
-            
-            {communitiesLoading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {[1, 2, 3, 4, 5, 6].map(i => (
-                  <Card key={i} className="border shadow-md">
-                    <div className="p-4 animate-pulse">
-                      <div className="flex gap-3">
-                        <div className="w-10 h-10 rounded-full bg-muted"></div>
-                        <div className="flex-1">
-                          <div className="h-5 bg-muted rounded w-3/4 mb-2"></div>
-                          <div className="h-4 bg-muted rounded w-full"></div>
-                          <div className="h-4 bg-muted rounded w-1/2 mt-1"></div>
-                        </div>
-                      </div>
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            ) : (
-              <>
-                {filteredCommunities.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {filteredCommunities.map(community => (
-                      <motion.div
-                        key={community.id}
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ duration: 0.3 }}
-                      >
-                        <CommunityCard 
-                          id={community.id}
-                          name={community.name}
-                          description={community.description}
-                          icon={community.icon}
-                          memberCount={community.memberCount}
-                          onJoin={() => handleJoinCommunity(community.id)}
-                          isJoined={hasJoinedCommunity(community.id)}
-                        />
-                      </motion.div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-16">
-                    <UsersRound className="h-12 w-12 mx-auto text-muted-foreground opacity-20" />
-                    <h3 className="mt-4 text-lg font-medium">No communities found</h3>
-                    <p className="text-muted-foreground">
-                      Try adjusting your search or check back later
-                    </p>
-                  </div>
-                )}
-              </>
-            )}
-          </TabsContent>
-          
-          <TabsContent value="joined" className="mt-0 space-y-4">
-            <div>
-              <h2 className="text-lg font-medium">Your Communities</h2>
-              <p className="text-sm text-muted-foreground mb-4">
-                Communities you've joined and participate in
-              </p>
-            </div>
-            
-            {userCommunitiesLoading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {[1, 2, 3].map(i => (
-                  <Card key={i} className="border shadow-md">
-                    <div className="p-4 animate-pulse">
-                      <div className="flex gap-3">
-                        <div className="w-10 h-10 rounded-full bg-muted"></div>
-                        <div className="flex-1">
-                          <div className="h-5 bg-muted rounded w-3/4 mb-2"></div>
-                          <div className="h-4 bg-muted rounded w-full"></div>
-                          <div className="h-4 bg-muted rounded w-1/2 mt-1"></div>
-                        </div>
-                      </div>
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            ) : (
-              <>
-                {userCommunities && userCommunities.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {userCommunities.map(community => (
-                      <motion.div
-                        key={community.id}
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ duration: 0.3 }}
-                      >
-                        <CommunityCard 
-                          id={community.id}
-                          name={community.name}
-                          description={community.description}
-                          icon={community.icon}
-                          memberCount={community.memberCount}
-                          isJoined={true}
-                        />
-                      </motion.div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-16 px-4">
-                    <Users className="h-12 w-12 mx-auto text-muted-foreground opacity-20" />
-                    <h3 className="mt-4 text-lg font-medium">You haven't joined any communities yet</h3>
-                    <p className="text-muted-foreground">
-                      Discover and join communities to connect with other eco-minded people
-                    </p>
-                    <Button 
-                      onClick={() => setActiveTab('discover')}
-                      className="mt-6 bg-green-600 hover:bg-green-700"
-                    >
-                      Discover Communities
-                    </Button>
-                  </div>
-                )}
-              </>
-            )}
-          </TabsContent>
         </div>
       </motion.div>
     </PageLayout>
