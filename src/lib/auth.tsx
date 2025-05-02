@@ -3,6 +3,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { getSupabaseClient } from "./supabase";
 import { Session, User } from "@supabase/supabase-js";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 type AuthContextType = {
   session: Session | null;
@@ -72,11 +73,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           
           // Handle auth state changes for redirects
           if (event === 'SIGNED_IN') {
+            // Show welcome message
+            toast.success("Welcome back!", {
+              description: "You've successfully logged in."
+            });
+            
             // Use setTimeout to avoid React state update conflicts
             setTimeout(() => {
               // Use window.location to ensure a full redirect that works with OAuth
               window.location.href = '/dashboard';
-            }, 0);
+            }, 500);
+          } else if (event === 'SIGNED_OUT') {
+            // Toast notification for logout
+            toast.info("You've been logged out", {
+              description: "Come back soon!"
+            });
           }
         }
       );
@@ -111,6 +122,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw error;
       }
 
+      toast.success("Account created!", {
+        description: "Please check your email to verify your account."
+      });
+      
       return { error: null, success: true };
     } catch (error) {
       console.error("Error signing up:", error);
@@ -194,19 +209,4 @@ export function useAuth() {
     throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
-}
-
-// Create a component for handling logout redirects
-export function AuthLogout() {
-  const navigate = useNavigate();
-  const { user } = useAuth();
-  
-  useEffect(() => {
-    if (!user) {
-      // Redirect to landing page when logged out
-      navigate("/");
-    }
-  }, [user, navigate]);
-  
-  return null;
 }

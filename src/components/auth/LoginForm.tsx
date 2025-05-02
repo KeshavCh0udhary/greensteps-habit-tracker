@@ -13,7 +13,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 import OAuthButtons from "./OAuthButtons";
@@ -28,7 +28,6 @@ type LoginFormValues = z.infer<typeof loginFormSchema>;
 const LoginForm = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { signIn } = useAuth();
-  const navigate = useNavigate();
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginFormSchema),
@@ -54,7 +53,7 @@ const LoginForm = () => {
         toast.success("Welcome back!", {
           description: "You've successfully logged in.",
         });
-        navigate("/dashboard");
+        // Redirection will be handled by the auth state change listener
       }
     } catch (error) {
       console.error("Login error:", error);

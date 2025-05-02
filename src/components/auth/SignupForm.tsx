@@ -13,7 +13,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 import OAuthButtons from "./OAuthButtons";
@@ -37,7 +37,6 @@ type SignupFormValues = z.infer<typeof signupFormSchema>;
 const SignupForm = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { signUp } = useAuth();
-  const navigate = useNavigate();
 
   const form = useForm<SignupFormValues>({
     resolver: zodResolver(signupFormSchema),
@@ -64,7 +63,7 @@ const SignupForm = () => {
         toast.success("Check your email", {
           description: "We sent you a confirmation link to verify your account.",
         });
-        navigate("/verify-email", { state: { email: values.email } });
+        // Navigate will be handled by auth state change listener
       }
     } catch (error) {
       console.error("Signup error:", error);
