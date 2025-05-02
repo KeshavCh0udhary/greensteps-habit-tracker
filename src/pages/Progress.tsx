@@ -14,6 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import StatsCard from "@/components/stats/StatsCard";
 import CalendarView from "@/components/eco/CalendarView";
+import { LogDataRecord } from "@/types/interfaces";
 
 // Types for our data
 interface Profile {
@@ -30,8 +31,6 @@ interface Badge {
   badge_type: string;
   earned_at: string;
 }
-
-type LogDataRecord = Record<string, { habits: string[], total_points: number }>;
 
 const Progress = () => {
   const { user } = useAuth();
@@ -297,7 +296,11 @@ const Progress = () => {
                   </CardDescription>
                 </div>
                 <div>
-                  <Tabs defaultValue={viewOption} value={viewOption} onValueChange={(value) => setViewOption(value as 'week' | 'month' | 'year')}>
+                  <Tabs 
+                    defaultValue={viewOption} 
+                    value={viewOption} 
+                    onValueChange={(value) => setViewOption(value as 'week' | 'month' | 'year')}
+                  >
                     <TabsList className="bg-muted/50">
                       <TabsTrigger value="week">Week</TabsTrigger>
                       <TabsTrigger value="month">Month</TabsTrigger>

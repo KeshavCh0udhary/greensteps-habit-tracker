@@ -20,4 +20,5 @@ export interface Community {
   description: string;
   icon: string;
   member_count: number;
+  isJoined?: boolean;
 }

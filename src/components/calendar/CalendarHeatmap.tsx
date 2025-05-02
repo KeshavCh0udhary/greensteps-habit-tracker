@@ -2,8 +2,9 @@
 import React from 'react';
 import { format, eachDayOfInterval, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear, isSameMonth } from 'date-fns';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { motion } from 'framer-motion';
+import { LogDataRecord } from '@/types/interfaces';
 
-type LogDataRecord = Record<string, { habits: string[], total_points: number }>;
 type ViewType = "week" | "month" | "year";
 
 interface CalendarHeatmapProps {
@@ -67,10 +68,12 @@ const CalendarHeatmap: React.FC<CalendarHeatmapProps> = ({ logs, viewType, curre
             return (
               <Popover key={formattedDate}>
                 <PopoverTrigger asChild>
-                  <button
+                  <motion.button
                     className={`aspect-square p-2 rounded-md transition-colors relative flex flex-col items-center justify-center ${colorClass} ${
                       format(day, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd') ? 'ring-2 ring-primary/50' : ''
                     }`}
+                    whileHover={{ scale: 1.1 }}
+                    transition={{ duration: 0.2 }}
                   >
                     <span className="font-medium">{format(day, 'd')}</span>
                     {habitCount > 0 && (
@@ -78,7 +81,7 @@ const CalendarHeatmap: React.FC<CalendarHeatmapProps> = ({ logs, viewType, curre
                         {habitCount}
                       </span>
                     )}
-                  </button>
+                  </motion.button>
                 </PopoverTrigger>
                 <PopoverContent className="w-52 p-2">
                   <DayPopoverContent day={day} habitCount={habitCount} points={points} />
@@ -130,7 +133,7 @@ const CalendarHeatmap: React.FC<CalendarHeatmapProps> = ({ logs, viewType, curre
             return (
               <Popover key={formattedDate}>
                 <PopoverTrigger asChild>
-                  <button
+                  <motion.button
                     className={`w-8 h-8 rounded transition-colors relative ${
                       isCurrentMonth 
                         ? colorClass 
@@ -140,6 +143,8 @@ const CalendarHeatmap: React.FC<CalendarHeatmapProps> = ({ logs, viewType, curre
                         ? 'ring-2 ring-primary/50'
                         : ''
                     }`}
+                    whileHover={{ scale: 1.1 }}
+                    transition={{ duration: 0.2 }}
                     disabled={!isCurrentMonth}
                   >
                     <span className="text-[10px] absolute top-0.5 left-0.5 text-muted-foreground">
@@ -150,7 +155,7 @@ const CalendarHeatmap: React.FC<CalendarHeatmapProps> = ({ logs, viewType, curre
                         {habitCount}
                       </span>
                     )}
-                  </button>
+                  </motion.button>
                 </PopoverTrigger>
                 <PopoverContent className="w-52 p-2">
                   <DayPopoverContent day={day} habitCount={habitCount} points={points} />
@@ -195,10 +200,12 @@ const CalendarHeatmap: React.FC<CalendarHeatmapProps> = ({ logs, viewType, curre
           return (
             <Popover key={formattedDate}>
               <PopoverTrigger asChild>
-                <button
-                  className={`w-3 h-3 ${colorClass} rounded-sm transition-transform hover:scale-125 ${
+                <motion.button
+                  className={`w-3 h-3 ${colorClass} rounded-sm transition-transform ${
                     format(day, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd') ? 'ring-1 ring-primary' : ''
                   }`}
+                  whileHover={{ scale: 1.5 }}
+                  transition={{ duration: 0.2 }}
                   aria-label={format(day, 'MMMM d, yyyy')}
                 />
               </PopoverTrigger>

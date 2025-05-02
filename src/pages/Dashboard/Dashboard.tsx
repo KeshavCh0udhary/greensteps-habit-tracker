@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { motion } from "framer-motion";
@@ -37,38 +36,36 @@ interface Badge {
   earned_at: string;
 }
 
+interface Community {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  member_count: number;
+  joined: boolean; // Track if user has joined
+}
+
 // Calendar view types
 type CalendarViewType = "week" | "month" | "year";
 
-// Sample communities for demonstration
-const sampleCommunities = [
+// Sample communities for the current user (showing only communities they've joined)
+// In a real app, this would come from the database with a "joined" flag
+const userCommunities: Community[] = [
   {
     id: "1",
     name: "Zero Waste Group",
     description: "Dedicated to reducing waste and living sustainably",
     icon: "♻️",
-    member_count: 128
-  },
-  {
-    id: "2",
-    name: "Plant Lovers",
-    description: "For people who love growing plants and gardening",
-    icon: "🌱",
-    member_count: 94
+    member_count: 128,
+    joined: true
   },
   {
     id: "3",
     name: "Eco Commuters",
     description: "Using eco-friendly transportation methods",
     icon: "🚲",
-    member_count: 56
-  },
-  {
-    id: "4",
-    name: "Clean Energy Advocates",
-    description: "Promoting renewable energy solutions",
-    icon: "☀️",
-    member_count: 72
+    member_count: 56,
+    joined: true
   }
 ];
 
@@ -330,6 +327,9 @@ const Dashboard = () => {
     }
   }, [user, profile]);
 
+  // Filter only joined communities for the dashboard
+  const joinedCommunities = userCommunities.filter(community => community.joined);
+
   return (
     <div className="container mx-auto p-4 md:p-6 bg-gradient-to-br from-green-50/50 to-blue-50/50 dark:from-green-950/30 dark:to-blue-950/30 min-h-screen">
       <motion.header 
@@ -388,7 +388,7 @@ const Dashboard = () => {
           </TabsTrigger>
           <TabsTrigger value="community" className="flex items-center gap-2">
             <Users className="h-4 w-4" />
-            Community
+            My Communities
           </TabsTrigger>
         </TabsList>
 
@@ -535,7 +535,7 @@ const Dashboard = () => {
           </motion.div>
         </TabsContent>
         
-        {/* Community Tab */}
+        {/* Community Tab - Modified to show only joined communities */}
         <TabsContent value="community">
           <motion.div 
             className="space-y-6"
@@ -550,31 +550,48 @@ const Dashboard = () => {
                 </span>
                 Your Communities
               </h2>
-              <Button size="sm" variant="outline" className="flex items-center gap-1">
-                <ArrowLeft className="h-4 w-4" />
-                <span>Join New</span>
-              </Button>
+              <Link to="/community">
+                <Button size="sm" variant="outline" className="flex items-center gap-1">
+                  <Users className="h-4 w-4" />
+                  <span>Explore Communities</span>
+                </Button>
+              </Link>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {sampleCommunities.map(community => (
-                <motion.div
-                  key={community.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5 }}
-                  whileHover={{ y: -4, transition: { duration: 0.2 } }}
-                >
-                  <CommunityCard
-                    id={community.id}
-                    name={community.name}
-                    description={community.description}
-                    icon={community.icon}
-                    memberCount={community.member_count}
-                  />
-                </motion.div>
-              ))}
-            </div>
+            {joinedCommunities.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {joinedCommunities.map(community => (
+                  <motion.div
+                    key={community.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5 }}
+                    whileHover={{ y: -4, transition: { duration: 0.2 } }}
+                  >
+                    <CommunityCard
+                      id={community.id}
+                      name={community.name}
+                      description={community.description}
+                      icon={community.icon}
+                      memberCount={community.member_count}
+                      isJoined={true}
+                    />
+                  </motion.div>
+                ))}
+              </div>
+            ) : (
+              <Card className="border shadow-md bg-card/80 backdrop-blur-sm py-12">
+                <CardContent className="text-center">
+                  <Users className="h-12 w-12 mx-auto mb-3 opacity-30" />
+                  <p className="text-muted-foreground">You haven't joined any communities yet.</p>
+                  <Link to="/community" className="mt-4 inline-block">
+                    <Button className="mt-2">
+                      Explore Communities
+                    </Button>
+                  </Link>
+                </CardContent>
+              </Card>
+            )}
           </motion.div>
         </TabsContent>
       </Tabs>

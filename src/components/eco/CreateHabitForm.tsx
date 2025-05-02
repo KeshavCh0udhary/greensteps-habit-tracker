@@ -24,6 +24,7 @@ interface CreateHabitFormProps {
 
 const CreateHabitForm = ({ onSuccess, onCancel }: CreateHabitFormProps) => {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm({
     defaultValues: {
@@ -43,6 +44,8 @@ const CreateHabitForm = ({ onSuccess, onCancel }: CreateHabitFormProps) => {
   // Handle creating a new custom habit
   const handleCreateHabit = async (data: { title: string, emoji: string, eco_points: number }) => {
     try {
+      setIsSubmitting(true);
+      
       // Insert the new habit into the database
       const { error, data: newHabit } = await supabase
         .from('eco_habits')
@@ -54,6 +57,8 @@ const CreateHabitForm = ({ onSuccess, onCancel }: CreateHabitFormProps) => {
         .select();
       
       if (error) throw error;
+      
+      setIsSubmitting(false);
       
       // Display success animation with the new habit emoji
       toast.custom(
@@ -83,6 +88,7 @@ const CreateHabitForm = ({ onSuccess, onCancel }: CreateHabitFormProps) => {
       onSuccess();
     } catch (error) {
       console.error("Error creating habit:", error);
+      setIsSubmitting(false);
       toast.error("Failed to create habit", {
         description: "Please try again later."
       });
@@ -120,8 +126,8 @@ const CreateHabitForm = ({ onSuccess, onCancel }: CreateHabitFormProps) => {
               </div>
             </PopoverContent>
           </Popover>
-          <input type="hidden" {...register("emoji")} />
-          {errors.emoji && <p className="text-xs text-destructive mt-1">Please select an emoji</p>}
+          <input type="hidden" {...register("emoji", { required: "Please select an emoji" })} />
+          {errors.emoji && <p className="text-xs text-destructive mt-1">{errors.emoji.message}</p>}
         </div>
         <div className="col-span-3">
           <Label htmlFor="title">Habit Title</Label>
@@ -158,16 +164,18 @@ const CreateHabitForm = ({ onSuccess, onCancel }: CreateHabitFormProps) => {
           type="button"
           variant="outline" 
           onClick={onCancel}
+          disabled={isSubmitting}
         >
           Cancel
         </Button>
         <Button 
           type="submit" 
           className="relative overflow-hidden bg-green-600 hover:bg-green-700"
+          disabled={isSubmitting}
         >
           <span className="flex items-center gap-1">
             <Plus className="h-4 w-4" />
-            Create Habit
+            {isSubmitting ? 'Creating...' : 'Create Habit'}
           </span>
           <motion.div 
             className="absolute inset-0 bg-white" 
