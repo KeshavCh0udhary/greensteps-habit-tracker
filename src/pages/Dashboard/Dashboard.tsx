@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -51,6 +50,9 @@ interface HabitWithLogStatus extends Habit {
   logId?: string;
   logNotes?: string | null;
 }
+
+// Define log data type for calendar
+type LogDataRecord = Record<string, { habits: string[], total_points: number }>;
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -164,7 +166,7 @@ const Dashboard = () => {
   const { data: monthlyLogs, isLoading: monthlyLogsLoading } = useQuery({
     queryKey: ['monthly-logs', user?.id, format(date, 'yyyy-MM')],
     queryFn: async () => {
-      if (!user) return [];
+      if (!user) return {} as LogDataRecord;
       
       const startDate = format(new Date(date.getFullYear(), date.getMonth(), 1), 'yyyy-MM-dd');
       const endDate = format(new Date(date.getFullYear(), date.getMonth() + 1, 0), 'yyyy-MM-dd');
@@ -191,7 +193,7 @@ const Dashboard = () => {
         acc[log.date].total_points += log.eco_points;
         
         return acc;
-      }, {} as Record<string, { habits: string[], total_points: number }>);
+      }, {} as LogDataRecord);
       
       return groupedByDate;
     },
@@ -232,7 +234,7 @@ const Dashboard = () => {
   });
   
   // Handle logging a habit
-  const handleLogHabit = async (habitId: string, notes: string) => {
+  const handleLogHabit = async (habitId: string, notes: string): Promise<void> => {
     if (!user) return Promise.reject("User not authenticated");
     
     try {
@@ -277,8 +279,6 @@ const Dashboard = () => {
           description: "Check your profile to see your new achievement!"
         });
       }
-      
-      return data;
     } catch (error) {
       console.error("Error logging habit:", error);
       return Promise.reject(error);
@@ -665,7 +665,7 @@ const Dashboard = () => {
                 <CalendarView 
                   date={date} 
                   onDateChange={setDate} 
-                  logData={monthlyLogs || {}}
+                  logData={monthlyLogs || {}} 
                 />
               )}
             </CardContent>
