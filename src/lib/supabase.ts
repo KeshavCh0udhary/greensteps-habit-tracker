@@ -1,119 +1,13 @@
 
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-
-// Types for our database
-export type Database = {
-  public: {
-    Tables: {
-      users: {
-        Row: {
-          id: string;
-          email: string;
-          created_at: string;
-          display_name: string | null;
-          avatar_url: string | null;
-        };
-        Insert: {
-          id?: string;
-          email: string;
-          created_at?: string;
-          display_name?: string | null;
-          avatar_url?: string | null;
-        };
-        Update: {
-          id?: string;
-          email?: string;
-          created_at?: string;
-          display_name?: string | null;
-          avatar_url?: string | null;
-        };
-      };
-      eco_habits: {
-        Row: {
-          id: string;
-          title: string;
-          emoji: string;
-          eco_points: number;
-        };
-        Insert: {
-          id?: string;
-          title: string;
-          emoji: string;
-          eco_points: number;
-        };
-        Update: {
-          id?: string;
-          title?: string;
-          emoji?: string;
-          eco_points?: number;
-        };
-      };
-      daily_logs: {
-        Row: {
-          id: string;
-          user_id: string;
-          habit_id: string;
-          date: string;
-          notes: string | null;
-          eco_points: number;
-        };
-        Insert: {
-          id?: string;
-          user_id: string;
-          habit_id: string;
-          date?: string;
-          notes?: string | null;
-          eco_points: number;
-        };
-        Update: {
-          id?: string;
-          user_id?: string;
-          habit_id?: string;
-          date?: string;
-          notes?: string | null;
-          eco_points?: number;
-        };
-      };
-      badges: {
-        Row: {
-          id: string;
-          user_id: string;
-          badge_type: string;
-          earned_at: string;
-        };
-        Insert: {
-          id?: string;
-          user_id: string;
-          badge_type: string;
-          earned_at?: string;
-        };
-        Update: {
-          id?: string;
-          user_id?: string;
-          badge_type?: string;
-          earned_at?: string;
-        };
-      };
-    };
-    Views: {
-      global_stats_view: {
-        Row: {
-          date: string;
-          total_points: number;
-          most_logged_habit: string;
-          total_logs: number;
-        };
-      };
-    };
-  };
-};
+import { Database } from "@/integrations/supabase/types";
 
 // Initialize Supabase client
 let supabase: SupabaseClient<Database>;
 
 const initSupabase = () => {
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-  const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "https://orefbswiccpmhnvbrloe.supabase.co";
+  const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9yZWZic3dpY2NwbWhudmJybG9lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYxNjgzNTEsImV4cCI6MjA2MTc0NDM1MX0.m5Tg13svNzOaZhxZEOqgQ0lT97nppkQUvaXy11l1WrA";
 
   if (!supabaseUrl || !supabaseAnonKey) {
     console.warn('Supabase credentials are missing. Please connect your project to Supabase for full functionality.');
@@ -122,7 +16,16 @@ const initSupabase = () => {
     return createClient<Database>('https://placeholder-url.supabase.co', 'placeholder-key');
   }
 
-  supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
+  supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      storage: localStorage,
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true,
+      flowType: 'pkce'
+    }
+  });
+  
   return supabase;
 };
 

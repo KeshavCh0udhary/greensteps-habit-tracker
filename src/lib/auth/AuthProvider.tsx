@@ -28,70 +28,83 @@ export function AuthProvider({ children }: AuthProviderProps) {
           setLoading(false);
           return;
         }
+
+        // Get initial session (and retry once if needed)
+        const getInitialSession = async (retryCount = 0) => {
+          try {
+            const { data } = await supabase.auth.getSession();
+            
+            console.log("Initial session state:", {
+              session: data.session,
+              user: data.session?.user ?? null,
+              isActive: !!data.session,
+            });
+            
+            if (data.session) {
+              setSession(data.session);
+              setUser(data.session.user);
+            }
+            
+            setLoading(false);
+          } catch (error) {
+            console.error("Error loading auth session:", error);
+            
+            // Try once more if first attempt failed
+            if (retryCount === 0) {
+              console.log("Retrying session fetch...");
+              setTimeout(() => getInitialSession(1), 1000);
+            } else {
+              setLoading(false);
+            }
+          }
+        };
+
+        // Get initial session
+        await getInitialSession();
+        
+        // Set up auth state change listener
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(
+          (event, newSession) => {
+            console.log("Auth state changed:", event, newSession?.user?.email);
+            
+            // Update the session and user state
+            setSession(newSession);
+            setUser(newSession?.user ?? null);
+            
+            if (event === 'SIGNED_IN') {
+              // Show welcome message
+              toast.success("Welcome back!", {
+                description: "You've successfully logged in."
+              });
+              
+              // Navigate to dashboard if on landing page
+              if (window.location.pathname === '/') {
+                window.location.href = '/dashboard';
+              }
+            } else if (event === 'SIGNED_OUT') {
+              // Toast notification for logout
+              toast.info("You've been logged out", {
+                description: "Come back soon!"
+              });
+              
+              // Redirect to landing page after logout
+              window.location.href = '/';
+            } else if (event === 'TOKEN_REFRESHED') {
+              console.log("Auth token refreshed successfully");
+            }
+          }
+        );
+
+        return () => {
+          subscription.unsubscribe();
+        };
       } catch (error) {
-        console.error("Error checking Supabase connection:", error);
-        setIsSupabaseConnected(false);
+        console.error("Error setting up auth:", error);
         setLoading(false);
       }
     };
 
     setupAuth();
-    
-    // Set up auth state change listener FIRST (before checking the session)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, newSession) => {
-        console.log("Auth state changed:", event, newSession?.user?.email);
-        
-        // Update the session and user state
-        setSession(newSession);
-        setUser(newSession?.user ?? null);
-        setLoading(false);
-        
-        if (event === 'SIGNED_IN') {
-          // Show welcome message
-          toast.success("Welcome back!", {
-            description: "You've successfully logged in."
-          });
-        } else if (event === 'SIGNED_OUT') {
-          // Toast notification for logout
-          toast.info("You've been logged out", {
-            description: "Come back soon!"
-          });
-          
-          // Redirect to landing page after logout
-          window.location.href = '/';
-        }
-      }
-    );
-
-    // THEN check for an existing session
-    const getInitialSession = async () => {
-      try {
-        const { data } = await supabase.auth.getSession();
-        
-        // Log the session state for debugging
-        console.log("Initial session state:", {
-          session: data.session,
-          user: data.session?.user ?? null,
-          isActive: !!data.session,
-        });
-        
-        if (data.session) {
-          setSession(data.session);
-          setUser(data.session.user);
-        }
-      } catch (error) {
-        console.error("Error loading auth session:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    getInitialSession();
-
-    return () => {
-      subscription.unsubscribe();
-    };
   }, []);
 
   const value = {

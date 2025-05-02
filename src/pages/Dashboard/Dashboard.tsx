@@ -3,108 +3,325 @@ import { useEffect, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/lib/auth";
-import { getSupabaseClient } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import EcoHabitCard from "@/components/eco/EcoHabitCard";
 import EcoHabitBadge from "@/components/eco/EcoHabitBadge";
-import { format } from "date-fns";
-import { Check, ChevronRight } from "lucide-react";
+import { format, subDays } from "date-fns";
+import { Check, ChevronRight, Plus } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useForm } from "react-hook-form";
+import { showConfetti, showStreakConfetti } from "@/lib/confetti";
+import CalendarView from "@/components/eco/CalendarView";
 
-// Mock data for initial preview
-const habitsList = [
-  { id: "1", emoji: "🚗", title: "Carpooling", points: 2 },
-  { id: "2", emoji: "🔄", title: "Reused Container", points: 1 },
-  { id: "3", emoji: "🍽️", title: "Skipped Meat", points: 2 },
-  { id: "4", emoji: "🚴", title: "Used Public Transport", points: 1.5 },
-  { id: "5", emoji: "🛍️", title: "No-Plastic Day", points: 2 },
-  { id: "6", emoji: "📝", title: "Others (Custom)", points: 1 },
-];
+// Types for our data
+interface Habit {
+  id: string;
+  emoji: string;
+  title: string;
+  eco_points: number;
+}
 
-// Simple mock data for the dashboard
-const mockStats = {
-  totalPoints: 28.5,
-  weeklyStreak: 5,
-  monthlyStreak: 3,
-  lifetimeContribution: 120.5,
-};
+interface Log {
+  id: string;
+  habit_id: string;
+  date: string;
+  notes: string | null;
+}
+
+interface Profile {
+  id: string;
+  total_points: number;
+  current_streak: number;
+  longest_streak: number;
+}
+
+interface Badge {
+  id: string;
+  badge_type: string;
+  earned_at: string;
+}
+
+interface HabitWithLogStatus extends Habit {
+  isLogged: boolean;
+  logId?: string;
+  logNotes?: string | null;
+}
 
 const Dashboard = () => {
   const { user } = useAuth();
-  const [loading, setLoading] = useState(true);
-  const [todaysLogs, setTodaysLogs] = useState<string[]>([]);
-  const [stats, setStats] = useState(mockStats);
-  const [date] = useState(new Date());
+  const [date, setDate] = useState(new Date());
+  const formattedDate = format(date, 'yyyy-MM-dd');
+  const [showAddHabitDialog, setShowAddHabitDialog] = useState(false);
+  
+  const { register, handleSubmit, reset } = useForm({
+    defaultValues: {
+      title: "",
+      emoji: "🌱",
+      eco_points: 1
+    }
+  });
 
-  useEffect(() => {
-    const fetchUserData = async () => {
-      if (!user) return;
-
-      setLoading(true);
-      try {
-        const supabase = getSupabaseClient();
-        const today = format(date, 'yyyy-MM-dd');
+  // Fetch eco habits
+  const { data: habits, isLoading: habitsLoading, refetch: refetchHabits } = useQuery({
+    queryKey: ['eco-habits'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('eco_habits')
+        .select('*')
+        .order('title', { ascending: true });
         
-        // Fetch today's logs for the user
-        const { data: logs, error: logsError } = await supabase
-          .from('daily_logs')
-          .select('habit_id')
-          .eq('user_id', user.id)
-          .eq('date', today);
-          
-        if (logsError) throw logsError;
+      if (error) throw error;
+      return data as Habit[];
+    }
+  });
+  
+  // Fetch user's logs for today
+  const { data: logs, isLoading: logsLoading, refetch: refetchLogs } = useQuery({
+    queryKey: ['daily-logs', user?.id, formattedDate],
+    queryFn: async () => {
+      if (!user) return [];
+      
+      const { data, error } = await supabase
+        .from('daily_logs')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('date', formattedDate);
         
-        if (logs) {
-          setTodaysLogs(logs.map(log => log.habit_id));
+      if (error) throw error;
+      return data as Log[];
+    },
+    enabled: !!user
+  });
+  
+  // Fetch user profile data
+  const { data: profile, isLoading: profileLoading, refetch: refetchProfile } = useQuery({
+    queryKey: ['profile', user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+        
+      if (error) throw error;
+      return data as Profile;
+    },
+    enabled: !!user
+  });
+  
+  // Fetch user badges
+  const { data: badges, isLoading: badgesLoading, refetch: refetchBadges } = useQuery({
+    queryKey: ['badges', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      
+      const { data, error } = await supabase
+        .from('badges')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('earned_at', { ascending: false });
+        
+      if (error) throw error;
+      return data as Badge[];
+    },
+    enabled: !!user
+  });
+  
+  // Fetch global stats
+  const { data: globalStats, isLoading: globalStatsLoading } = useQuery({
+    queryKey: ['global-stats'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('global_stats_view')
+        .select('*')
+        .order('log_date', { ascending: false })
+        .limit(1);
+        
+      if (error) throw error;
+      return data[0] || { total_logs: 0, total_points: 0 };
+    }
+  });
+  
+  // Combine habits with log status
+  const habitsWithLogStatus: HabitWithLogStatus[] = habits?.map(habit => {
+    const log = logs?.find(l => l.habit_id === habit.id);
+    return {
+      ...habit,
+      isLogged: !!log,
+      logId: log?.id,
+      logNotes: log?.notes
+    };
+  }) || [];
+  
+  // Monthly calendar data for the heatmap
+  const { data: monthlyLogs, isLoading: monthlyLogsLoading } = useQuery({
+    queryKey: ['monthly-logs', user?.id, format(date, 'yyyy-MM')],
+    queryFn: async () => {
+      if (!user) return [];
+      
+      const startDate = format(new Date(date.getFullYear(), date.getMonth(), 1), 'yyyy-MM-dd');
+      const endDate = format(new Date(date.getFullYear(), date.getMonth() + 1, 0), 'yyyy-MM-dd');
+      
+      const { data, error } = await supabase
+        .from('daily_logs')
+        .select('date, habit_id, eco_points')
+        .eq('user_id', user.id)
+        .gte('date', startDate)
+        .lte('date', endDate);
+        
+      if (error) throw error;
+      
+      // Group by date
+      const groupedByDate = data.reduce((acc, log) => {
+        if (!acc[log.date]) {
+          acc[log.date] = {
+            habits: [],
+            total_points: 0
+          };
         }
         
-        // In a real implementation, we'd fetch actual user stats here
-        // For now, use mock data with slight randomization
-        setStats({
-          ...mockStats,
-          totalPoints: Math.round(mockStats.totalPoints * (0.9 + Math.random() * 0.2) * 10) / 10,
-          weeklyStreak: Math.round(mockStats.weeklyStreak * (0.8 + Math.random() * 0.4)),
-        });
-      } catch (error) {
-        console.error('Error fetching user data:', error);
-        toast.error('Failed to load your data', {
-          description: 'Please try refreshing the page',
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
+        acc[log.date].habits.push(log.habit_id);
+        acc[log.date].total_points += log.eco_points;
+        
+        return acc;
+      }, {} as Record<string, { habits: string[], total_points: number }>);
+      
+      return groupedByDate;
+    },
+    enabled: !!user
+  });
 
-    fetchUserData();
-  }, [user, date]);
-
-  const handleCompleteHabit = async (habitId: string, notes: string) => {
-    if (!user) return;
+  // Habit frequency data for charts
+  const { data: habitStats, isLoading: habitStatsLoading } = useQuery({
+    queryKey: ['habit-stats', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      
+      const { data, error } = await supabase
+        .from('daily_logs')
+        .select('habit_id, eco_points')
+        .eq('user_id', user.id);
+        
+      if (error) throw error;
+      
+      // Group and count by habit
+      const habitCounts = data.reduce((acc, log) => {
+        if (!acc[log.habit_id]) {
+          acc[log.habit_id] = {
+            count: 0,
+            points: 0
+          };
+        }
+        
+        acc[log.habit_id].count++;
+        acc[log.habit_id].points += log.eco_points;
+        
+        return acc;
+      }, {} as Record<string, { count: number, points: number }>);
+      
+      return habitCounts;
+    },
+    enabled: !!user
+  });
+  
+  // Handle logging a habit
+  const handleLogHabit = async (habitId: string, notes: string) => {
+    if (!user) return Promise.reject("User not authenticated");
     
     try {
-      // In a real implementation, we'd submit to Supabase
-      // For now, just update the UI state
-      setTodaysLogs([...todaysLogs, habitId]);
+      const habit = habits?.find(h => h.id === habitId);
+      if (!habit) return Promise.reject("Habit not found");
       
-      // Find the completed habit to get its points
-      const habit = habitsList.find(h => h.id === habitId);
-      if (habit) {
-        setStats({
-          ...stats,
-          totalPoints: Math.round((stats.totalPoints + habit.points) * 10) / 10,
+      // Check if already logged
+      const existingLog = logs?.find(l => l.habit_id === habitId);
+      if (existingLog) {
+        return Promise.reject("You've already logged this habit today");
+      }
+      
+      // Insert new log
+      const { data, error } = await supabase
+        .from('daily_logs')
+        .insert([{
+          user_id: user.id,
+          habit_id: habitId,
+          eco_points: habit.eco_points,
+          date: formattedDate,
+          notes: notes || null
+        }])
+        .select();
+      
+      if (error) throw error;
+      
+      // Refetch data
+      await Promise.all([refetchLogs(), refetchProfile(), refetchBadges()]);
+      
+      // Show confetti on successful log
+      showConfetti();
+      
+      // If new badge earned, show streak confetti
+      const oldBadgesCount = badges?.length || 0;
+      const newBadgesCount = (await refetchBadges()).data?.length || 0;
+      
+      if (newBadgesCount > oldBadgesCount) {
+        // Extra celebration for new badge
+        showStreakConfetti(profile?.current_streak || 1);
+        
+        toast.success("New Badge Earned! 🏆", {
+          description: "Check your profile to see your new achievement!"
         });
       }
       
-      return Promise.resolve();
+      return data;
     } catch (error) {
-      console.error('Error completing habit:', error);
+      console.error("Error logging habit:", error);
       return Promise.reject(error);
     }
   };
+  
+  // Handle creating a new custom habit
+  const handleCreateHabit = async (data: { title: string, emoji: string, eco_points: number }) => {
+    try {
+      const { error } = await supabase
+        .from('eco_habits')
+        .insert([{
+          title: data.title,
+          emoji: data.emoji,
+          eco_points: Number(data.eco_points)
+        }]);
+      
+      if (error) throw error;
+      
+      toast.success("New habit created!", {
+        description: "You can now log this eco-habit"
+      });
+      
+      // Reset form and close dialog
+      reset();
+      setShowAddHabitDialog(false);
+      
+      // Refetch habits
+      refetchHabits();
+    } catch (error) {
+      console.error("Error creating habit:", error);
+      toast.error("Failed to create habit", {
+        description: "Please try again later."
+      });
+    }
+  };
+  
+  const isLoading = habitsLoading || logsLoading || profileLoading;
 
   return (
     <div className="container mx-auto p-4 md:p-6">
       <header className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Welcome back{user?.email ? `, ${user.email.split('@')[0]}` : ''}!</h1>
+        <h1 className="text-3xl font-bold mb-2">Welcome back{user?.user_metadata?.display_name ? `, ${user.user_metadata.display_name}` : ''}!</h1>
         <p className="text-muted-foreground">Track your eco-friendly habits and see your impact.</p>
       </header>
 
@@ -112,6 +329,7 @@ const Dashboard = () => {
         <TabsList>
           <TabsTrigger value="today">Today's Actions</TabsTrigger>
           <TabsTrigger value="stats">My Stats</TabsTrigger>
+          <TabsTrigger value="calendar">Calendar</TabsTrigger>
           <TabsTrigger value="community">Community</TabsTrigger>
         </TabsList>
 
@@ -121,24 +339,104 @@ const Dashboard = () => {
             <h2 className="text-xl font-semibold">
               Today's Eco-Habits ({format(date, 'MMM d, yyyy')})
             </h2>
-            <div className="text-sm text-muted-foreground">
-              Logged: {todaysLogs.length}/{habitsList.length}
+            <div className="flex items-center gap-3">
+              <div className="text-sm text-muted-foreground">
+                Logged: {logs?.length || 0}/{habits?.length || 0}
+              </div>
+              <Dialog open={showAddHabitDialog} onOpenChange={setShowAddHabitDialog}>
+                <DialogTrigger asChild>
+                  <Button size="sm" variant="outline" className="flex items-center gap-1">
+                    <Plus className="h-4 w-4" />
+                    <span>New</span>
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Create Custom Eco-Habit</DialogTitle>
+                    <DialogDescription>
+                      Add a new eco-friendly habit to track. Custom habits are visible to all users.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <form onSubmit={handleSubmit(handleCreateHabit)}>
+                    <div className="space-y-4 py-2">
+                      <div className="grid grid-cols-4 gap-4">
+                        <div className="col-span-1">
+                          <Label htmlFor="emoji">Emoji</Label>
+                          <Input
+                            id="emoji"
+                            className="text-center text-xl"
+                            {...register("emoji")}
+                          />
+                        </div>
+                        <div className="col-span-3">
+                          <Label htmlFor="title">Habit Title</Label>
+                          <Input
+                            id="title"
+                            placeholder="E.g., Used Reusable Bag"
+                            {...register("title", { required: true })}
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <Label htmlFor="eco_points">Eco Points (1-5)</Label>
+                        <Input
+                          id="eco_points"
+                          type="number"
+                          min="0.5"
+                          max="5"
+                          step="0.5"
+                          {...register("eco_points", { 
+                            required: true,
+                            min: 0.5,
+                            max: 5,
+                            valueAsNumber: true
+                          })}
+                        />
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Assign points based on environmental impact (0.5-5)
+                        </p>
+                      </div>
+                    </div>
+                    <DialogFooter className="mt-4">
+                      <Button type="submit">Create Habit</Button>
+                    </DialogFooter>
+                  </form>
+                </DialogContent>
+              </Dialog>
             </div>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {habitsList.map((habit) => (
-              <EcoHabitCard
-                key={habit.id}
-                id={habit.id}
-                emoji={habit.emoji}
-                title={habit.title}
-                points={habit.points}
-                isCompleted={todaysLogs.includes(habit.id)}
-                onComplete={handleCompleteHabit}
-              />
-            ))}
-          </div>
+          {isLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {[1, 2, 3, 4].map((i) => (
+                <Card key={i} className="animate-pulse">
+                  <div className="p-4 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-muted rounded-full"></div>
+                      <div className="space-y-2">
+                        <div className="h-4 w-24 bg-muted rounded"></div>
+                        <div className="h-3 w-16 bg-muted rounded"></div>
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {habitsWithLogStatus.map((habit) => (
+                <EcoHabitCard
+                  key={habit.id}
+                  id={habit.id}
+                  emoji={habit.emoji}
+                  title={habit.title}
+                  points={habit.eco_points}
+                  isCompleted={habit.isLogged}
+                  onComplete={handleLogHabit}
+                />
+              ))}
+            </div>
+          )}
         </TabsContent>
 
         {/* My Stats Tab */}
@@ -148,50 +446,47 @@ const Dashboard = () => {
               <Card>
                 <CardHeader className="pb-2">
                   <CardTitle className="text-xl">Total Points</CardTitle>
-                  <CardDescription>Today's contribution</CardDescription>
+                  <CardDescription>Your eco-contribution</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="text-3xl font-bold text-primary">
-                    {stats.totalPoints}
+                    {profileLoading ? "..." : (profile?.total_points || 0)}
                   </div>
                 </CardContent>
               </Card>
 
               <Card>
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-xl">Weekly Streak</CardTitle>
+                  <CardTitle className="text-xl">Current Streak</CardTitle>
                   <CardDescription>Consecutive days</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="text-3xl font-bold text-primary">
-                    {stats.weeklyStreak} days
+                    {profileLoading ? "..." : (profile?.current_streak || 0)} days
                   </div>
                 </CardContent>
               </Card>
 
               <Card>
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-xl">Monthly Goal</CardTitle>
-                  <CardDescription>Progress this month</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-end gap-2">
-                    <div className="text-3xl font-bold text-primary">
-                      {stats.monthlyStreak}/4
-                    </div>
-                    <div className="text-sm text-muted-foreground">weeks</div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-xl">Lifetime</CardTitle>
-                  <CardDescription>Total contribution</CardDescription>
+                  <CardTitle className="text-xl">Longest Streak</CardTitle>
+                  <CardDescription>Best performance</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="text-3xl font-bold text-primary">
-                    {stats.lifetimeContribution}
+                    {profileLoading ? "..." : (profile?.longest_streak || 0)} days
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-xl">Badges</CardTitle>
+                  <CardDescription>Achievements earned</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold text-primary">
+                    {badgesLoading ? "..." : (badges?.length || 0)}
                   </div>
                 </CardContent>
               </Card>
@@ -206,40 +501,77 @@ const Dashboard = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-2">
-                    <div className="flex items-center gap-3 p-3 bg-accent/50 rounded-lg">
-                      <div className="bg-green-100 dark:bg-green-800/30 w-10 h-10 rounded-full flex items-center justify-center text-xl shadow-sm">
-                        🏆
+                    {badgesLoading ? (
+                      <div className="animate-pulse space-y-2">
+                        {[1, 2, 3].map((i) => (
+                          <div key={i} className="flex items-center gap-3 p-3 bg-accent/50 rounded-lg">
+                            <div className="bg-muted w-10 h-10 rounded-full"></div>
+                            <div className="flex-1 space-y-1">
+                              <div className="h-4 bg-muted rounded w-24"></div>
+                              <div className="h-3 bg-muted rounded w-32"></div>
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                      <div className="flex-1">
-                        <div className="font-medium">First Log Badge</div>
-                        <div className="text-sm text-muted-foreground">Started your eco journey</div>
+                    ) : badges?.length === 0 ? (
+                      <div className="text-center py-6">
+                        <p className="text-muted-foreground">Complete eco-habits to earn badges!</p>
                       </div>
-                      <Check className="w-5 h-5 text-green-600" />
-                    </div>
+                    ) : (
+                      badges?.map((badge) => (
+                        <div key={badge.id} className="flex items-center gap-3 p-3 bg-accent/50 rounded-lg">
+                          <div className="bg-green-100 dark:bg-green-800/30 w-10 h-10 rounded-full flex items-center justify-center text-xl shadow-sm">
+                            {badge.badge_type === 'First Log' && '🏆'}
+                            {badge.badge_type === '7-Day Streak' && '🔥'}
+                            {badge.badge_type === '30-Day Streak' && '⚡'}
+                            {badge.badge_type === '100 Points Club' && '💯'}
+                            {badge.badge_type === '500 Points Club' && '🌟'}
+                          </div>
+                          <div className="flex-1">
+                            <div className="font-medium">{badge.badge_type}</div>
+                            <div className="text-sm text-muted-foreground">
+                              Earned on {format(new Date(badge.earned_at), 'MMM d, yyyy')}
+                            </div>
+                          </div>
+                          <Check className="w-5 h-5 text-green-600" />
+                        </div>
+                      ))
+                    )}
                     
-                    <div className="flex items-center gap-3 p-3 bg-accent/50 rounded-lg">
-                      <div className="bg-green-100 dark:bg-green-800/30 w-10 h-10 rounded-full flex items-center justify-center text-xl shadow-sm">
-                        🔥
-                      </div>
-                      <div className="flex-1">
-                        <div className="font-medium">7-Day Streak</div>
-                        <div className="text-sm text-muted-foreground">Active for a whole week</div>
-                      </div>
-                      <Check className="w-5 h-5 text-green-600" />
-                    </div>
-                    
-                    <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
-                      <div className="bg-muted w-10 h-10 rounded-full flex items-center justify-center text-xl shadow-sm">
-                        💯
-                      </div>
-                      <div className="flex-1">
-                        <div className="font-medium">100 Points Club</div>
-                        <div className="text-sm text-muted-foreground">Earn 100 total points</div>
-                      </div>
-                      <div className="text-sm text-muted-foreground">
-                        {stats.lifetimeContribution}/100
-                      </div>
-                    </div>
+                    {/* Badges to earn */}
+                    {!badgesLoading && badges && (
+                      <>
+                        {!badges.some(b => b.badge_type === '30-Day Streak') && (
+                          <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+                            <div className="bg-muted w-10 h-10 rounded-full flex items-center justify-center text-xl shadow-sm">
+                              ⚡
+                            </div>
+                            <div className="flex-1">
+                              <div className="font-medium">30-Day Streak</div>
+                              <div className="text-sm text-muted-foreground">Log habits for 30 days in a row</div>
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                              {profile?.current_streak || 0}/30
+                            </div>
+                          </div>
+                        )}
+                        
+                        {!badges.some(b => b.badge_type === '100 Points Club') && (
+                          <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+                            <div className="bg-muted w-10 h-10 rounded-full flex items-center justify-center text-xl shadow-sm">
+                              💯
+                            </div>
+                            <div className="flex-1">
+                              <div className="font-medium">100 Points Club</div>
+                              <div className="text-sm text-muted-foreground">Earn 100 total points</div>
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                              {profile?.total_points || 0}/100
+                            </div>
+                          </div>
+                        )}
+                      </>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -251,56 +583,93 @@ const Dashboard = () => {
                   <CardDescription>Your most logged eco-actions</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-2 flex-1">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <span>🍽️</span>
-                            <span className="font-medium">Skipped Meat</span>
+                  {habitStatsLoading || habitsLoading ? (
+                    <div className="animate-pulse space-y-4">
+                      {[1, 2, 3].map((i) => (
+                        <div key={i} className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <div className="h-4 bg-muted rounded w-24"></div>
+                            <div className="h-4 bg-muted rounded w-12"></div>
                           </div>
-                          <span className="text-sm font-medium">12 logs</span>
+                          <div className="w-full bg-muted rounded-full h-2"></div>
                         </div>
-                        <div className="w-full bg-muted rounded-full h-2">
-                          <div className="bg-green-600 h-2 rounded-full" style={{ width: '80%' }}></div>
-                        </div>
-                      </div>
+                      ))}
                     </div>
-                    
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-2 flex-1">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <span>🚴</span>
-                            <span className="font-medium">Used Public Transport</span>
-                          </div>
-                          <span className="text-sm font-medium">10 logs</span>
+                  ) : habits?.length && habitStats ? (
+                    <div className="space-y-4">
+                      {habits
+                        .filter(habit => habitStats[habit.id]?.count > 0)
+                        .sort((a, b) => 
+                          (habitStats[b.id]?.count || 0) - (habitStats[a.id]?.count || 0)
+                        )
+                        .slice(0, 3)
+                        .map(habit => {
+                          const count = habitStats[habit.id]?.count || 0;
+                          const maxCount = Math.max(...Object.values(habitStats).map(stat => stat.count));
+                          const percentage = maxCount > 0 ? (count / maxCount) * 100 : 0;
+                          
+                          return (
+                            <div key={habit.id} className="flex items-center justify-between">
+                              <div className="space-y-2 flex-1">
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-2">
+                                    <span>{habit.emoji}</span>
+                                    <span className="font-medium">{habit.title}</span>
+                                  </div>
+                                  <span className="text-sm font-medium">{count} logs</span>
+                                </div>
+                                <div className="w-full bg-muted rounded-full h-2">
+                                  <div 
+                                    className="bg-green-600 h-2 rounded-full" 
+                                    style={{ width: `${percentage}%` }}
+                                  ></div>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })
+                      }
+                      
+                      {Object.keys(habitStats).length === 0 && (
+                        <div className="text-center py-6">
+                          <p className="text-muted-foreground">Start logging habits to see your summary!</p>
                         </div>
-                        <div className="w-full bg-muted rounded-full h-2">
-                          <div className="bg-green-600 h-2 rounded-full" style={{ width: '65%' }}></div>
-                        </div>
-                      </div>
+                      )}
                     </div>
-                    
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-2 flex-1">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <span>🔄</span>
-                            <span className="font-medium">Reused Container</span>
-                          </div>
-                          <span className="text-sm font-medium">8 logs</span>
-                        </div>
-                        <div className="w-full bg-muted rounded-full h-2">
-                          <div className="bg-green-600 h-2 rounded-full" style={{ width: '50%' }}></div>
-                        </div>
-                      </div>
+                  ) : (
+                    <div className="text-center py-6">
+                      <p className="text-muted-foreground">No habit data available yet.</p>
                     </div>
-                  </div>
+                  )}
                 </CardContent>
               </Card>
             </div>
           </div>
+        </TabsContent>
+        
+        {/* Calendar View Tab */}
+        <TabsContent value="calendar">
+          <Card>
+            <CardHeader>
+              <CardTitle>Monthly Activity</CardTitle>
+              <CardDescription>
+                Your eco-habit logging activity for {format(date, 'MMMM yyyy')}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {monthlyLogsLoading ? (
+                <div className="animate-pulse">
+                  <div className="h-64 bg-muted rounded"></div>
+                </div>
+              ) : (
+                <CalendarView 
+                  date={date} 
+                  onDateChange={setDate} 
+                  logData={monthlyLogs || {}}
+                />
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {/* Community Tab */}
@@ -316,19 +685,25 @@ const Dashboard = () => {
               <CardContent>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                   <div className="space-y-2 text-center">
-                    <div className="text-4xl font-bold text-primary">12,405</div>
+                    <div className="text-4xl font-bold text-primary">
+                      {globalStatsLoading ? "..." : (globalStats?.total_points?.toLocaleString() || "0")}
+                    </div>
                     <div className="text-sm text-muted-foreground">
                       Total Points Logged
                     </div>
                   </div>
                   <div className="space-y-2 text-center">
-                    <div className="text-4xl font-bold text-primary">🍽️</div>
+                    <div className="text-4xl font-bold text-primary">
+                      {globalStatsLoading ? "..." : (globalStats?.total_logs?.toLocaleString() || "0")}
+                    </div>
                     <div className="text-sm text-muted-foreground">
-                      Most Common Habit Today
+                      Eco-Habits Tracked
                     </div>
                   </div>
                   <div className="space-y-2 text-center">
-                    <div className="text-4xl font-bold text-primary">3.2t</div>
+                    <div className="text-4xl font-bold text-primary">
+                      {globalStatsLoading ? "..." : ((globalStats?.total_points || 0) * 0.25).toFixed(1) + "kg"}
+                    </div>
                     <div className="text-sm text-muted-foreground">
                       Estimated Carbon Saved
                     </div>
@@ -352,7 +727,7 @@ const Dashboard = () => {
                         👑
                       </div>
                       <div>
-                        <div className="font-medium">EcoStar2023</div>
+                        <div className="font-medium">EcoChampion</div>
                         <div className="flex gap-1 mt-1">
                           {["🚗", "🔄", "🍽️", "🚴", "🛍️"].map((emoji, i) => (
                             <span
@@ -374,7 +749,7 @@ const Dashboard = () => {
                         🥈
                       </div>
                       <div>
-                        <div className="font-medium">PlanetFriend</div>
+                        <div className="font-medium">EarthGuardian</div>
                         <div className="flex gap-1 mt-1">
                           {["🔄", "🍽️", "🚴", "🛍️"].map((emoji, i) => (
                             <span
@@ -396,7 +771,7 @@ const Dashboard = () => {
                         🥉
                       </div>
                       <div>
-                        <div className="font-medium">GreenHero</div>
+                        <div className="font-medium">PlanetProtector</div>
                         <div className="flex gap-1 mt-1">
                           {["🚗", "🔄", "🍽️"].map((emoji, i) => (
                             <span

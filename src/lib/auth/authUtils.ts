@@ -23,6 +23,9 @@ export const signUpUser = async (email: string, password: string) => {
     // Check if session exists (auto sign-in)
     if (data?.session) {
       console.log("Sign up successful with immediate session");
+      
+      // Navigate to dashboard
+      window.location.href = "/dashboard";
     } else {
       console.log("Sign up successful, email confirmation required");
       toast.success("Account created!", {
@@ -54,6 +57,9 @@ export const signInUser = async (email: string, password: string) => {
     }
 
     console.log("Sign in successful", data.session);
+    
+    // Navigate to dashboard
+    window.location.href = "/dashboard";
     return { error: null, success: true };
   } catch (error) {
     console.error("Error signing in:", error);
